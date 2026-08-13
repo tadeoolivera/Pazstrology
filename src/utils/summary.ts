@@ -97,9 +97,9 @@ export const calculateBodySummaries = (
 export const calculateHouseSummaries = (angles: number[], ringRotation: number): HouseSummary[] => {
   const points = partitionPoints(angles);
   return points
-    .map((p, i) => ({
+    .map((p) => ({
       house: houseOf(p),
-      sign: signOf(points[(i + 1) % points.length].angle, ringRotation)
+      sign: signOf(p.angle, ringRotation)
     }))
     .sort((a, b) => a.house - b.house);
 };

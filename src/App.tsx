@@ -30,29 +30,31 @@ export default function App() {
   const chartRef = useRef<ChartActions>(null);
 
   return (
-    <div className="App">
-      <div className="relative flex items-start justify-center gap-6 py-3">
+    <div className="App px-6 py-6 md:py-0 md:px-0">
+      <div className="flex flex-col-reverse justify-center items-center gap-6 -mt-6 pb-6 md:flex-row md:justify-center md:mt-0 md:py-5 md:gap-13">
         <BodyPanel
           data={data}
           onAdd={(name) => chartRef.current?.addBody(name)}
           onRemove={(name) => chartRef.current?.removeBody(name)}
         />
-        <div className="flex flex-col items-center justify-center gap-6">
-          <Chart
-            ref={chartRef}
-            onSummary={setData}
-            onOptionsChange={({showMinorAspects: mm, showMajorAspects: mM, showAsteroidAspects: mAA, showNodeAspects: mN }) => {
-              setShowMinorAspects(mm);
-              setShowMajorAspects(mM);
-              setShowAsteroidAspects(mAA);
-              setShowNodeAspects(mN);
-            }}
-            showMinorAspects={showMinorAspects}
-            showMajorAspects={showMajorAspects}
-            showAsteroidAspects={showAsteroidAspects}
-            showNodeAspects={showNodeAspects}
-          />
-          <div className="flex flex-wrap justify-center gap-3">
+        <Chart
+          ref={chartRef}
+          onSummary={setData}
+          onOptionsChange={({showMinorAspects: mm, showMajorAspects: mM, showAsteroidAspects: mAA, showNodeAspects: mN }) => {
+            setShowMinorAspects(mm);
+            setShowMajorAspects(mM);
+            setShowAsteroidAspects(mAA);
+            setShowNodeAspects(mN);
+          }}
+          showMinorAspects={showMinorAspects}
+          showMajorAspects={showMajorAspects}
+          showAsteroidAspects={showAsteroidAspects}
+          showNodeAspects={showNodeAspects}
+        />
+        <span className="md:w-100"/> {/* Empty space to center the chart */}
+      </div>
+      <div className="flex flex-col items-center justify-center gap-6"> 
+        <div className="flex flex-wrap justify-center gap-3">
           <button style={buttonStyle} onClick={() => setShowMinorAspects((v) => !v)}>
             Asp. menores: {showMinorAspects ? 'SI' : 'NO'}
           </button>
@@ -94,7 +96,6 @@ export default function App() {
             Aspectos de la carta
           </button>
         </div>
-      </div>
       </div>
 
       {data && modal === 'planets' && (

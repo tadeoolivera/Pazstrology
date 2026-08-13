@@ -189,10 +189,12 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
     if (planetDrag.current) {
       const { idx, inicio, base } = planetDrag.current;
       const theta = angleFromPointer(e);
+      const snap = e.shiftKey;
       const sunIndex = PLANET_ORDER.indexOf('sun');
       setPlanetAngles((prev) => {
         const next = [...prev];
-        const angle = norm360(base + (theta - inicio));
+        const raw = norm360(base + (theta - inicio));
+        const angle = snap ? norm360(Math.round(raw)) : raw;
         if (idx === sunIndex) {
           next[idx] = angle;
           for (const name of Object.keys(MAX_ELONGATION) as (keyof typeof MAX_ELONGATION)[]) {
@@ -203,7 +205,8 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
             let delta = norm360(prevPi - angle);
             if (delta > 180) delta -= 360;
             if (Math.abs(delta) > limit + 0.5) {
-              next[pi] = norm360(angle + Math.sign(delta) * limit);
+              const pushed = norm360(angle + Math.sign(delta) * limit);
+              next[pi] = snap ? norm360(Math.round(pushed)) : pushed;
             }
           }
         } else {
@@ -212,7 +215,8 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
           if (limit !== undefined && sol !== null) {
             let delta = norm360(angle - sol);
             if (delta > 180) delta -= 360;
-            next[idx] = norm360(sol + Math.max(-limit, Math.min(limit, delta)));
+            const clamped = norm360(sol + Math.max(-limit, Math.min(limit, delta)));
+            next[idx] = snap ? norm360(Math.round(clamped)) : clamped;
           } else {
             next[idx] = angle;
           }
@@ -224,9 +228,11 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
     if (asteroidDrag.current) {
       const { idx, inicio, base } = asteroidDrag.current;
       const theta = angleFromPointer(e);
+      const snap = e.shiftKey;
       setAsteroidAngles((prev) => {
         const next = [...prev];
-        next[idx] = norm360(base + (theta - inicio));
+        const raw = norm360(base + (theta - inicio));
+        next[idx] = snap ? norm360(Math.round(raw)) : raw;
         return next;
       });
       return;
@@ -382,7 +388,7 @@ const reset = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `carta-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.tson`;
+    a.download = `carta-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };

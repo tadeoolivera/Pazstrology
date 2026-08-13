@@ -23,14 +23,10 @@ const BodyIcon = ({ name, size }: { name: string; size: number }) => {
 
 const panelStyle: CSSProperties = {
   display: 'flex',
-  position: 'absolute',
   flexDirection: 'column',
-  left: 0,
-  marginLeft: 30,
   gap: 10,
   minWidth: 200,
   maxWidth: 400,
-  maxHeight: '75vh',
   overflowY: 'auto',
   padding: 12,
   borderRadius: 12,
