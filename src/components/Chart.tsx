@@ -474,8 +474,8 @@ const reset = () => {
   for (let t = 0; t < 360; t += 1) {
     const mayor = t % 5 === 0;
     const largo = mayor ? 14 : 7;
-    const p1 = toXY(t, RING_INNER);
-    const p2 = toXY(t, RING_INNER - largo);
+    const p1 = toXY(t + ringRotation, RING_INNER);
+    const p2 = toXY(t + ringRotation, RING_INNER - largo);
     ticks.push({ x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, mayor });
   }
 
