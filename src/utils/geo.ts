@@ -1,5 +1,3 @@
-
-
 import { CENTER } from '../data/config.tsx';
 
 export const norm360 = (a: number) => ((a % 360) + 360) % 360;

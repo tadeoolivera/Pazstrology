@@ -457,7 +457,6 @@ const reset = () => {
     return `M ${pi.x} ${pi.y} A ${RING_INNER} ${RING_INNER} 0 0 1 ${pj.x} ${pj.y} L ${pj2.x} ${pj2.y} A ${RING_OUTER} ${RING_OUTER} 0 0 0 ${pi2.x} ${pi2.y} Z`;
   });
 
-  // Houses ring
   const ringsNumeros = sortedPoints.map((p, i) => {
     const sig = sortedPoints[(i + 1) % sortedPoints.length];
     const a = p.angle;
@@ -469,7 +468,6 @@ const reset = () => {
     return `M ${pi.x} ${pi.y} A ${NUMBERS_RING_INNER} ${NUMBERS_RING_INNER} 0 0 1 ${pj.x} ${pj.y} L ${pj2.x} ${pj2.y} A ${NUMBERS_RING_OUTER} ${NUMBERS_RING_OUTER} 0 0 0 ${pi2.x} ${pi2.y} Z`;
   });
 
-  // Angle ticks
   const ticks = [];
   for (let t = 0; t < 360; t += 1) {
     const mayor = t % 5 === 0;
@@ -498,8 +496,6 @@ const reset = () => {
     for (let j = i + 1; j < bodies.length; j++) {
       const d = circularDistance(bodies[i].angle, bodies[j].angle);
       const involvesAsteroid = bodies[i].isAsteroid || bodies[j].isAsteroid;
-      // Los aspectos de los nodos norte/sur se apagan juntos de forma
-      // independiente del resto de aspectos con asteroides
       const involvesNode =
         (bodies[i].name === 'southNode' || bodies[i].name === 'northNode') ||
         (bodies[j].name === 'southNode' || bodies[j].name === 'northNode');
@@ -536,7 +532,6 @@ const reset = () => {
     }
   }
 
-// Detects changes and calls onSummary with the computed data (so App can show them in the Summary)
   useEffect(() => {
     onSummary?.(
       calculateChartData(
@@ -552,7 +547,6 @@ const reset = () => {
     );
   }, [angles, ringRotation, planetAngles, visibleAsteroidAngles, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects, onSummary]);
 
-  // Persists every change back so a reload restores the same state
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
@@ -569,7 +563,6 @@ const reset = () => {
     );
   }, [angles, ringRotation, planetAngles, asteroidAngles, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects]);
 
-  // On mount, syncs the saved toggles with App
   const syncedOptions = useRef(false);
   useEffect(() => {
     if (syncedOptions.current) return;
@@ -636,7 +629,6 @@ const reset = () => {
           {/* Líneas de las particiones */}
           {points.map((p, idx) => {
             const A = toXY(p.angle, NUMBERS_RING_INNER);
-            // Las cúspides de las casas 10 y 1 sobresalen un poco del anillo
             const isCusp = idx === 0 || idx === 1 || idx === 6 || idx === 7;
             const baseWidth = isCusp ? 2 : 0.5;
             const PROTRUSION = 8;
@@ -687,7 +679,7 @@ const reset = () => {
           </g>
         ))}
 
-        {/* Líneas de los aspects */}
+        {/* Líneas de los aspectos */}
         {aspectLines.map((l, i) => (
           <path
             key={i}

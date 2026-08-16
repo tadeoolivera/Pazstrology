@@ -1,5 +1,3 @@
-
-
 export const SIGNS_NAMES: Record<string, string> = {
   aries: 'Aries',
   taurus: 'Tauro',

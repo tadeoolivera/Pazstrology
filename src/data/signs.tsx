@@ -1,5 +1,3 @@
-
-
 import CancerIcon from 'zodiacfonts/icons/signs/cancer.svg?react';
 import LeoIcon from 'zodiacfonts/icons/signs/leo.svg?react';
 import VirgoIcon from 'zodiacfonts/icons/signs/virgo.svg?react';

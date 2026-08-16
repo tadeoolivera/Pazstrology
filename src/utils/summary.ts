@@ -1,5 +1,3 @@
-
-
 import { DIAMETER_COUNT } from '../data/config.tsx';
 import { PLANETS, PLANET_ORDER } from '../data/planets.tsx';
 import { ASTEROIDS, ASTEROID_ORDER } from '../data/asteroids.tsx';

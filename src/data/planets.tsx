@@ -1,5 +1,3 @@
-
-
 import SunIcon from 'zodiacfonts/icons/main-planets/sun.svg?react';
 import MoonIcon from 'zodiacfonts/icons/main-planets/moon.svg?react';
 import MercuryIcon from 'zodiacfonts/icons/main-planets/mercury.svg?react';
