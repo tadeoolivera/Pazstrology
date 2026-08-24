@@ -49,6 +49,9 @@ const houseOf = (p: PartitionPoint) => (((p.isPrimary ? 12 - p.d : 6 - p.d) + 8)
 const signOf = (a: number, ringRotation: number) =>
   SIGN_ORDER[Math.floor(norm360(a - ringRotation) / 30) % 12];
 
+const signOfBody = (a: number, ringRotation: number) =>
+  SIGN_ORDER[Math.floor(norm360(a - ringRotation - 1e-7) / 30) % 12];
+
 export const calculateBodySummaries = (
   angles: number[],
   ringRotation: number,
@@ -67,7 +70,7 @@ export const calculateBodySummaries = (
     });
 
     const housePoint = points[k >= 0 ? k : points.length - 1];
-    return { sign: signOf(a, ringRotation), house: houseOf(housePoint) };
+    return { sign: signOfBody(a, ringRotation), house: houseOf(housePoint) };
   };
 
   const planets = PLANET_ORDER.flatMap((name, i) => {
