@@ -46,11 +46,16 @@ const partitionPoints = (angles: number[]): PartitionPoint[] => {
 
 const houseOf = (p: PartitionPoint) => (((p.isPrimary ? 12 - p.d : 6 - p.d) + 8) % 12) + 1;
 
-const signOf = (a: number, ringRotation: number) =>
-  SIGN_ORDER[Math.floor(norm360(a - ringRotation) / 30) % 12];
-
 const signOfBody = (a: number, ringRotation: number) =>
   SIGN_ORDER[Math.floor(norm360(a - ringRotation - 1e-7) / 30) % 12];
+
+const signOfHouse = (a: number, ringRotation: number) => {
+  const diff = norm360(a - ringRotation);
+  const eps = 1e-7;
+  const mod = diff % 30;
+  const k = (mod < eps || Math.abs(mod - 30) < eps) ? Math.round(diff / 30) : Math.ceil(diff / 30 - eps);
+  return SIGN_ORDER[((k % 12) + 12) % 12];
+};
 
 export const calculateBodySummaries = (
   angles: number[],
@@ -100,7 +105,7 @@ export const calculateHouseSummaries = (angles: number[], ringRotation: number):
   return points
     .map((p) => ({
       house: houseOf(p),
-      sign: signOf(p.angle, ringRotation)
+      sign: signOfHouse(p.angle, ringRotation)
     }))
     .sort((a, b) => a.house - b.house);
 };
