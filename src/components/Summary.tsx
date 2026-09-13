@@ -26,8 +26,8 @@ const Summary = ({ planets, styles }: Props) => {
           <tr>
             <th style={s.th}>Cuerpo</th>
             <th style={s.th}>Signo</th>
-            <th style={s.th}>Grado</th>
             <th style={s.th}>Casa</th>
+            <th style={s.th}>Grado</th>
           </tr>
         </thead>
         <tbody>
@@ -35,8 +35,8 @@ const Summary = ({ planets, styles }: Props) => {
             <tr key={p.name}>
               <td style={s.td}>{nameDe(p.name)}</td>
               <td style={s.td}>{SIGNS_NAMES[p.sign] ?? p.sign}</td>
-              <td style={s.td}>{p.degree}</td>
               <td style={s.td}>{p.house}</td>
+              <td style={s.td}>{p.degree}</td>
             </tr>
           ))}
         </tbody>
