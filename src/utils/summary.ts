@@ -10,6 +10,7 @@ export type BodySummary = {
   sign: string;
   house: number;
   color: string;
+  degree: string;
 };
 
 export type HouseSummary = {
@@ -75,7 +76,19 @@ export const calculateBodySummaries = (
     });
 
     const housePoint = points[k >= 0 ? k : points.length - 1];
-    return { sign: signOfBody(a, ringRotation), house: houseOf(housePoint) };
+    const diff = norm360(a - ringRotation);
+    const mod = diff % 30;
+    const eps = 1e-7;
+    let degInSign: number;
+    if (mod < eps || Math.abs(mod - 30) < eps) {
+      degInSign = 29 + 59/60;
+    } else {
+      degInSign = (30 - (diff % 30)) % 30;
+    }
+    const deg = Math.floor(degInSign);
+    const min = Math.floor((degInSign - deg) * 60);
+    const degree = `${deg}°${min}'`;
+    return { sign: signOfBody(a, ringRotation), house: houseOf(housePoint), degree };
   };
 
   const planets = PLANET_ORDER.flatMap((name, i) => {
@@ -133,6 +146,11 @@ export const calculateAspectSummaries = (
       for (const asp of ASPECTS) {
         if (asp.minor && !showMinorAspects) continue;
         if (!asp.minor && !showMajorAspects) continue;
+        const isNodeOpposition =
+          ((bodies[i].name === 'northNode' && bodies[j].name === 'southNode') ||
+            (bodies[i].name === 'southNode' && bodies[j].name === 'northNode')) &&
+          asp.name === 'oposición';
+        if (isNodeOpposition) continue;
         const margin = involvesAsteroid ? asp.margin - 1 : asp.margin;
         if (Math.abs(d - asp.angle) <= margin) {
           results.push({

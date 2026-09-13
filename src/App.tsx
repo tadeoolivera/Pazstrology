@@ -27,6 +27,7 @@ export default function App() {
   const [showMajorAspects, setShowMajorAspects] = useState(true);
   const [showAsteroidAspects, setShowAsteroidAspects] = useState(true);
   const [showNodeAspects, setShowNodeAspects] = useState(true);
+  const [syncRotation, setSyncRotation] = useState(false);
   const chartRef = useRef<ChartActions>(null);
 
   return (
@@ -50,11 +51,15 @@ export default function App() {
           showMajorAspects={showMajorAspects}
           showAsteroidAspects={showAsteroidAspects}
           showNodeAspects={showNodeAspects}
+          syncRotation={syncRotation}
         />
-        <span className="md:w-100"/> {/* Empty space to center the chart */}
+        <span className="md:w-100"/>
       </div>
       <div className="flex flex-col items-center justify-center gap-6"> 
         <div className="flex flex-wrap justify-center gap-3">
+          <button style={buttonStyle} onClick={() => setSyncRotation((v) => !v)}>
+            Giro sincronizado: {syncRotation ? 'SI' : 'NO'}
+          </button>
           <button style={buttonStyle} onClick={() => setShowMinorAspects((v) => !v)}>
             Asp. menores: {showMinorAspects ? 'SI' : 'NO'}
           </button>
@@ -62,7 +67,7 @@ export default function App() {
             Asp. mayores: {showMajorAspects ? 'SI' : 'NO'}
           </button>
           <button style={buttonStyle} onClick={() => setShowAsteroidAspects((v) => !v)}>
-            Asp. con asteroides: {showAsteroidAspects ? 'SI' : 'NO'}
+            Asp. con Lilith/Quiron: {showAsteroidAspects ? 'SI' : 'NO'}
           </button>
           <button style={buttonStyle} onClick={() => setShowNodeAspects((v) => !v)}>
             Asp. con nodos: {showNodeAspects ? 'SI' : 'NO'}

@@ -83,9 +83,10 @@ type Props = {
   showMajorAspects: boolean;
   showAsteroidAspects: boolean;
   showNodeAspects: boolean;
+  syncRotation?: boolean;
 };
 
-const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects }: Props) => {
+const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects, syncRotation = false }: Props) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const [angles, setAngles] = useState(() =>
@@ -95,6 +96,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
   const [dragging, setDragging] = useState<{ d: number; isPrimary: boolean } | null>(null);
   const [ringRotation, setRingRotation] = useState(() => savedChart()?.ringRotation ?? 0);
   const ringDrag = useRef<{ inicio: number; base: number } | null>(null);
+  const ringSyncBodies = useRef<{ planets: (number | null)[]; asteroids: (number | null)[] } | null>(null);
   const [planetAngles, setPlanetAngles] = useState<(number | null)[]>(
     () => savedChart()?.planetAngles ?? Array(PLANET_ORDER.length).fill(null)
   );
@@ -183,7 +185,14 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     if (ringDrag.current) {
       const theta = angleFromPointer(e);
-      setRingRotation(norm360(ringDrag.current.base + (theta - ringDrag.current.inicio)));
+      const delta = theta - ringDrag.current.inicio;
+      const newRing = norm360(ringDrag.current.base + delta);
+      setRingRotation(newRing);
+      if (syncRotation && ringSyncBodies.current) {
+        const { planets: initPlanets, asteroids: initAsteroids } = ringSyncBodies.current;
+        setPlanetAngles(initPlanets.map(a => a === null ? null : norm360(a + delta)));
+        setAsteroidAngles(initAsteroids.map(a => a === null ? null : norm360(a + delta)));
+      }
       return;
     }
     if (planetDrag.current) {
@@ -245,6 +254,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
   const handlePointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
     if (ringDrag.current) {
       ringDrag.current = null;
+      ringSyncBodies.current = null;
       return;
     }
     if (planetDrag.current) {
@@ -287,6 +297,11 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
     e.stopPropagation();
     (e.target as Element).setPointerCapture(e.pointerId);
     ringDrag.current = { inicio: angleFromPointer(e), base: ringRotation };
+    if (syncRotation) {
+      ringSyncBodies.current = { planets: [...planetAngles], asteroids: [...asteroidAngles] };
+    } else {
+      ringSyncBodies.current = null;
+    }
   };
 
 const reset = () => {
@@ -504,6 +519,11 @@ const reset = () => {
       for (const asp of ASPECTS) {
         if (asp.minor && !showMinorAspects) continue;
         if (!asp.minor && !showMajorAspects) continue;
+        const isNodeOpposition =
+          ((bodies[i].name === 'northNode' && bodies[j].name === 'southNode') ||
+            (bodies[i].name === 'southNode' && bodies[j].name === 'northNode')) &&
+          asp.name === 'oposición';
+        if (isNodeOpposition) continue;
         const margin = involvesAsteroid ? asp.margin - 1 : asp.margin;
         if (Math.abs(d - asp.angle) <= margin) {
           const A = toXY(bodies[i].angle, ASPECTS_RADIUS);
