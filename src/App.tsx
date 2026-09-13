@@ -28,15 +28,18 @@ export default function App() {
   const [showAsteroidAspects, setShowAsteroidAspects] = useState(true);
   const [showNodeAspects, setShowNodeAspects] = useState(true);
   const [syncRotation, setSyncRotation] = useState(false);
+  const [retrogrades, setRetrogrades] = useState<Set<string>>(new Set());
   const chartRef = useRef<ChartActions>(null);
 
   return (
     <div className="App px-6 py-6 md:py-0 md:px-0">
-      <div className="flex flex-col-reverse justify-center items-center gap-6 -mt-6 pb-6 md:flex-row md:justify-center md:mt-0 md:py-5 md:gap-13">
+      <div className="relative flex flex-col-reverse justify-center items-center gap-6 -mt-6 pb-6 md:flex-row md:justify-center md:mt-0 md:py-5 md:gap-13">
         <BodyPanel
           data={data}
           onAdd={(name) => chartRef.current?.addBody(name)}
           onRemove={(name) => chartRef.current?.removeBody(name)}
+          retrogrades={retrogrades}
+          onToggleRetrograde={(name) => chartRef.current?.toggleRetrograde(name)}
         />
         <Chart
           ref={chartRef}
@@ -47,6 +50,7 @@ export default function App() {
             setShowAsteroidAspects(mAA);
             setShowNodeAspects(mN);
           }}
+          onRetrogradesChange={setRetrogrades}
           showMinorAspects={showMinorAspects}
           showMajorAspects={showMajorAspects}
           showAsteroidAspects={showAsteroidAspects}
@@ -54,6 +58,43 @@ export default function App() {
           syncRotation={syncRotation}
         />
         <span className="md:w-100"/>
+         <button 
+          onClick={() => chartRef.current?.undo()}
+          aria-label="Deshacer"
+          className="absolute top-5 left-1 flex items-center justify-center gap-2 rounded-lg border border-[#8A5A22] bg-[#FFFDF7] p-2 text-[#5C3A14] shadow-2xl transition-all active:scale-95 hover:bg-[#f4efe1] md:hidden"
+        >
+          <svg 
+            className="h-6 w-6 md:h-4 md:w-4" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+          </svg>
+          <span className="hidden md:inline font-medium">
+            Deshacer
+          </span>
+        </button>
+
+        <button 
+          onClick={() => chartRef.current?.redo()}
+          aria-label="Rehacer"
+          className="absolute top-5 right-1 flex items-center justify-center gap-2 rounded-lg border border-[#8A5A22] bg-[#FFFDF7] p-2 text-[#5C3A14] shadow-2xl transition-all active:scale-95 hover:bg-[#f4efe1] md:hidden"
+        >
+          <svg 
+            className="h-6 w-6 md:h-4 md:w-4" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24" 
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 15l6-6m0 0l-6-6m6 6H9a6 6 0 000 12h3" />
+          </svg>
+          <span className="hidden md:inline font-medium">
+            Rehacer
+          </span>
+        </button>
       </div>
       <div className="flex flex-col items-center justify-center gap-6"> 
         <div className="flex flex-wrap justify-center gap-3">

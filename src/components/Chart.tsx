@@ -30,6 +30,9 @@ export type ChartActions = {
   load: (file: File) => void;
   addBody: (name: string) => void;
   removeBody: (name: string) => void;
+  undo: () => void;
+  redo: () => void;
+  toggleRetrograde: (name: string) => void;
 };
 
 const STORAGE_KEY = 'pazstrology:chart';
@@ -43,6 +46,7 @@ type SavedChart = {
   showMajorAspects: boolean;
   showAsteroidAspects: boolean;
   showNodeAspects: boolean;
+  retrogrades?: string[];
 };
 
 function readSavedChart(raw: string | null): SavedChart | null {
@@ -79,6 +83,7 @@ type Props = {
     showAsteroidAspects: boolean;
     showNodeAspects: boolean;
   }) => void;
+  onRetrogradesChange?: (retrogrades: Set<string>) => void;
   showMinorAspects: boolean;
   showMajorAspects: boolean;
   showAsteroidAspects: boolean;
@@ -86,7 +91,7 @@ type Props = {
   syncRotation?: boolean;
 };
 
-const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects, syncRotation = false }: Props) => {
+const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects, syncRotation = false }: Props) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const [angles, setAngles] = useState(() =>
@@ -105,6 +110,26 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
     () => savedChart()?.asteroidAngles ?? Array(ASTEROID_ORDER.length).fill(null)
   );
   const asteroidDrag = useRef<{ idx: number; inicio: number; base: number } | null>(null);
+  const [retrogrades, setRetrogrades] = useState<Set<string>>(
+    () => new Set(savedChart()?.retrogrades ?? [])
+  );
+  const historyRef = useRef<{ angles: number[]; ringRotation: number; planetAngles: (number | null)[]; asteroidAngles: (number | null)[]; retrogrades: string[] }[]>([]);
+  const redoRef = useRef<{ angles: number[]; ringRotation: number; planetAngles: (number | null)[]; asteroidAngles: (number | null)[]; retrogrades: string[] }[]>([]);
+  const pushHistory = useCallback(() => {
+    historyRef.current.push({
+      angles: [...angles],
+      ringRotation,
+      planetAngles: [...planetAngles],
+      asteroidAngles: [...asteroidAngles],
+      retrogrades: [...retrogrades],
+    });
+    if (historyRef.current.length > 50) historyRef.current.shift();
+    redoRef.current = [];
+  }, [angles, ringRotation, planetAngles, asteroidAngles, retrogrades]);
+
+  useEffect(() => {
+    onRetrogradesChange?.(retrogrades);
+  }, [retrogrades, onRetrogradesChange]);
 
   const visibleAsteroidAngles = asteroidAngles.map((a, i) => {
     if (a === null) return null as number | null;
@@ -177,6 +202,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
   const handlePointerDown = (d: number, isPrimary: boolean) => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    pushHistory();
     setDragging({ d, isPrimary });
     (e.target as Element).setPointerCapture(e.pointerId);
     move(d, isPrimary, e);
@@ -277,6 +303,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
     e.stopPropagation();
     const base = planetAngles[idx];
     if (base === null) return;
+    pushHistory();
     (e.target as Element).setPointerCapture(e.pointerId);
     planetDrag.current = { idx, inicio: angleFromPointer(e), base };
   };
@@ -288,6 +315,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
     const idxPar = esNorth ? 0 : idx;
     const base = esNorth ? asteroidAngles[0] : asteroidAngles[idx];
     if (base === null) return;
+    pushHistory();
     (e.target as Element).setPointerCapture(e.pointerId);
     asteroidDrag.current = { idx: idxPar, inicio: angleFromPointer(e), base };
   };
@@ -295,6 +323,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
   const startRingDrag = (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    pushHistory();
     (e.target as Element).setPointerCapture(e.pointerId);
     ringDrag.current = { inicio: angleFromPointer(e), base: ringRotation };
     if (syncRotation) {
@@ -305,13 +334,16 @@ const Chart = ({ ref, onSummary, onOptionsChange, showMinorAspects, showMajorAsp
   };
 
 const reset = () => {
+    pushHistory();
     setAngles(Array.from({ length: DIAMETER_COUNT }, (_, i) => i * (360 / (DIAMETER_COUNT * 2))));
     setRingRotation(0);
     setPlanetAngles(Array(PLANET_ORDER.length).fill(null));
     setAsteroidAngles(Array(ASTEROID_ORDER.length).fill(null));
+    setRetrogrades(new Set());
   };
 
   const addBody = (name: string) => {
+    pushHistory();
     const pi = PLANET_ORDER.indexOf(name as (typeof PLANET_ORDER)[number]);
     if (pi >= 0) {
       setPlanetAngles((prev) => {
@@ -364,7 +396,19 @@ const reset = () => {
     });
   };
 
+  const toggleRetrograde = (name: string) => {
+    if (['sun', 'moon', 'southNode', 'northNode'].includes(name)) return;
+    pushHistory();
+    setRetrogrades((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  };
+
   const removeBody = (name: string) => {
+    pushHistory();
     const pi = PLANET_ORDER.indexOf(name as (typeof PLANET_ORDER)[number]);
     if (pi >= 0) {
       setPlanetAngles((prev) => {
@@ -397,7 +441,8 @@ const reset = () => {
       showMinorAspects,
       showMajorAspects,
       showAsteroidAspects,
-      showNodeAspects
+      showNodeAspects,
+      retrogrades: [...retrogrades]
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -420,10 +465,12 @@ const reset = () => {
         ) {
           throw new Error('estructura inválida');
         }
+        pushHistory();
         setAngles(data.angles);
         setRingRotation(data.ringRotation ?? 0);
         setPlanetAngles(data.planetAngles);
         setAsteroidAngles(data.asteroidAngles);
+        setRetrogrades(new Set(data.retrogrades ?? []));
         onOptionsChange?.({
           showMinorAspects: data.showMinorAspects ?? true,
           showMajorAspects: data.showMajorAspects ?? true,
@@ -434,12 +481,51 @@ const reset = () => {
       .catch(() => alert('El archivo no es una carta válida'));
   };
 
+  const undo = () => {
+    const prev = historyRef.current.pop();
+    if (!prev) return;
+    redoRef.current.push({
+      angles: [...angles],
+      ringRotation,
+      planetAngles: [...planetAngles],
+      asteroidAngles: [...asteroidAngles],
+      retrogrades: [...retrogrades],
+    });
+    if (redoRef.current.length > 50) redoRef.current.shift();
+    setAngles(prev.angles);
+    setRingRotation(prev.ringRotation);
+    setPlanetAngles(prev.planetAngles);
+    setAsteroidAngles(prev.asteroidAngles);
+    setRetrogrades(new Set(prev.retrogrades));
+  };
+
+  const redo = () => {
+    const next = redoRef.current.pop();
+    if (!next) return;
+    historyRef.current.push({
+      angles: [...angles],
+      ringRotation,
+      planetAngles: [...planetAngles],
+      asteroidAngles: [...asteroidAngles],
+      retrogrades: [...retrogrades],
+    });
+    if (historyRef.current.length > 50) historyRef.current.shift();
+    setAngles(next.angles);
+    setRingRotation(next.ringRotation);
+    setPlanetAngles(next.planetAngles);
+    setAsteroidAngles(next.asteroidAngles);
+    setRetrogrades(new Set(next.retrogrades));
+  };
+
   useImperativeHandle(ref, () => ({
     reset,
     download: downloadChart,
     load: loadChart,
     addBody,
     removeBody,
+    undo,
+    redo,
+    toggleRetrograde,
   }));
 
   const points = [];
@@ -578,10 +664,11 @@ const reset = () => {
         showMinorAspects,
         showMajorAspects,
         showAsteroidAspects,
-        showNodeAspects
+        showNodeAspects,
+        retrogrades: [...retrogrades]
       })
     );
-  }, [angles, ringRotation, planetAngles, asteroidAngles, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects]);
+  }, [angles, ringRotation, planetAngles, asteroidAngles, showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects, retrogrades]);
 
   const syncedOptions = useRef(false);
   useEffect(() => {
@@ -597,6 +684,50 @@ const reset = () => {
       });
     }
   }, [onOptionsChange]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        const prev = historyRef.current.pop();
+        if (!prev) return;
+        redoRef.current.push({
+          angles: [...angles],
+          ringRotation,
+          planetAngles: [...planetAngles],
+          asteroidAngles: [...asteroidAngles],
+          retrogrades: [...retrogrades],
+        });
+        if (redoRef.current.length > 50) redoRef.current.shift();
+        setAngles(prev.angles);
+        setRingRotation(prev.ringRotation);
+        setPlanetAngles(prev.planetAngles);
+        setAsteroidAngles(prev.asteroidAngles);
+        setRetrogrades(new Set(prev.retrogrades));
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        const next = redoRef.current.pop();
+        if (!next) return;
+        historyRef.current.push({
+          angles: [...angles],
+          ringRotation,
+          planetAngles: [...planetAngles],
+          asteroidAngles: [...asteroidAngles],
+          retrogrades: [...retrogrades],
+        });
+        if (historyRef.current.length > 50) historyRef.current.shift();
+        setAngles(next.angles);
+        setRingRotation(next.ringRotation);
+        setPlanetAngles(next.planetAngles);
+        setAsteroidAngles(next.asteroidAngles);
+        setRetrogrades(new Set(next.retrogrades));
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [angles, ringRotation, planetAngles, asteroidAngles, retrogrades]);
 
   return (
     <div style={styles.wrapper}>
@@ -711,15 +842,17 @@ const reset = () => {
           />
         ))}
 
-        {/* Marcas de planets */}
+        {/* Marcas de planetas */}
         {planetAngles.map((a, idx) => {
           if (a === null) return null;
-          const planeta = PLANETS[PLANET_ORDER[idx]];
+          const name = PLANET_ORDER[idx];
+          const planeta = PLANETS[name];
           const A = toXY(a, RING_INNER);
           const B = toXY(a, RING_INNER - 30);
           const G = toXY(a, PLANETS_RADIUS);
+          const isRetro = retrogrades.has(name);
           return (
-            <g key={PLANET_ORDER[idx]} style={{ cursor: 'grab' }}>
+            <g key={name} style={{ cursor: 'grab' }}>
               <circle
                 cx={G.x}
                 cy={G.y}
@@ -739,19 +872,24 @@ const reset = () => {
               <g transform={`translate(${G.x - PLANET_ICON_SIZE / 2}, ${G.y - PLANET_ICON_SIZE / 2})`} onPointerDown={startPlanetDrag(idx)}>
                 {cloneElement(planeta.icon, { width: PLANET_ICON_SIZE, height: PLANET_ICON_SIZE })}
               </g>
+              {isRetro && (
+                <text x={G.x + 20} y={G.y - 10} fontSize={11} fontWeight="800" fill={planeta.color} textAnchor="middle">R</text>
+              )}
             </g>
           );
         })}
 
-        {/* Marcas de asteroids */}
+        {/* Marcas de asteroides */}
         {visibleAsteroidAngles.map((a, idx) => {
           if (a === null) return null;
-          const isAsteroid = ASTEROIDS[ASTEROID_ORDER[idx]];
+          const name = ASTEROID_ORDER[idx];
+          const isAsteroid = ASTEROIDS[name];
           const A = toXY(a, RING_INNER);
           const B = toXY(a, RING_INNER - 30);
           const G = toXY(a, PLANETS_RADIUS);
+          const isRetro = retrogrades.has(name);
           return (
-            <g key={ASTEROID_ORDER[idx]} style={{ cursor: 'grab' }}>
+            <g key={name} style={{ cursor: 'grab' }}>
               <circle
                 cx={G.x}
                 cy={G.y}
@@ -771,6 +909,9 @@ const reset = () => {
               <g transform={`translate(${G.x - PLANET_ICON_SIZE / 2}, ${G.y - PLANET_ICON_SIZE / 2})`} onPointerDown={startAsteroidDrag(idx)}>
                 {cloneElement(isAsteroid.icon, { width: PLANET_ICON_SIZE, height: PLANET_ICON_SIZE })}
               </g>
+              {isRetro && (
+                <text x={G.x + 20} y={G.y - 10} fontSize={11} fontWeight="800" fill={isAsteroid.color} textAnchor="middle">R</text>
+              )}
             </g>
           );
         })}

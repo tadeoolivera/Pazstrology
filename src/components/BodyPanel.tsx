@@ -92,19 +92,46 @@ const removeStyle: CSSProperties = {
   cursor: 'pointer',
 };
 
+const retroStyle: CSSProperties = {
+  position: 'absolute',
+  bottom: 2,
+  right: 2,
+  width: 20,
+  height: 20,
+  lineHeight: 1,
+  borderRadius: '50%',
+  border: '1px solid #8A5A22',
+  background: '#FFFDF7',
+  color: '#5C3A14',
+  fontSize: 11,
+  fontWeight: 700,
+  cursor: 'pointer',
+};
+
+const retroActiveStyle: CSSProperties = {
+  ...retroStyle,
+  background: '#8A5A22',
+  color: '#FFFDF7',
+};
+
 const nameStyle: CSSProperties = {
   fontSize: 12,
   color: '#3A2A12',
 };
 
+const EXCLUDED_RETRO = new Set(['sun', 'moon', 'southNode', 'northNode']);
+
 type Props = {
   data: ChartData | null;
   onAdd: (name: string) => void;
   onRemove: (name: string) => void;
+  retrogrades: Set<string>;
+  onToggleRetrograde: (name: string) => void;
 };
 
-const BodyPanel = ({ data, onAdd, onRemove }: Props) => {
+const BodyPanel = ({ data, onAdd, onRemove, retrogrades, onToggleRetrograde }: Props) => {
   const present = (name: string) => data?.planets.some((p) => p.name === name) ?? false;
+  const isRetro = (name: string) => retrogrades.has(name);
 
   return (
     <aside style={panelStyle}>
@@ -115,6 +142,8 @@ const BodyPanel = ({ data, onAdd, onRemove }: Props) => {
       <div style={sheetStyle}>
         {PLANET_ORDER.map((name) => {
           const isPresent = present(name);
+          const canRetro = !EXCLUDED_RETRO.has(name);
+          const retro = isRetro(name);
           return (
             <div
               key={name}
@@ -135,11 +164,25 @@ const BodyPanel = ({ data, onAdd, onRemove }: Props) => {
                   ✕
                 </button>
               )}
+              {canRetro && (
+                <button
+                  style={retro ? retroActiveStyle : retroStyle}
+                  aria-label={`${retro ? 'Quitar' : 'Marcar'} retrógrado ${PLANETS_NAMES[name]}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleRetrograde(name);
+                  }}
+                >
+                  R
+                </button>
+              )}
             </div>
           );
         })}
         {ASTEROID_ORDER.map((name) => {
           const isPresent = present(name);
+          const canRetro = !EXCLUDED_RETRO.has(name);
+          const retro = isRetro(name);
           return (
             <div
               key={name}
@@ -158,6 +201,18 @@ const BodyPanel = ({ data, onAdd, onRemove }: Props) => {
                   }}
                 >
                   ✕
+                </button>
+              )}
+              {canRetro && (
+                <button
+                  style={retro ? retroActiveStyle : retroStyle}
+                  aria-label={`${retro ? 'Quitar' : 'Marcar'} retrógrado ${ASTEROID_NAMES[name]}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleRetrograde(name);
+                  }}
+                >
+                  R
                 </button>
               )}
             </div>
