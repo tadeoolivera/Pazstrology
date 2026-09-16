@@ -183,6 +183,10 @@ export const calculateChartData = (
     ...PLANET_ORDER.flatMap((name, i) => {
       const a = planetAngles[i];
       return a === null ? [] : [{ name, angle: a, isAsteroid: false }];
+    }),
+    ...ASTEROID_ORDER.flatMap((name, i) => {
+      const a = visibleAsteroidAngles[i];
+      return a === null ? [] : [{ name, angle: a, isAsteroid: true }];
     })
   ];
   return {

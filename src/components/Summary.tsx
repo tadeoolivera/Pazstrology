@@ -6,10 +6,11 @@ export type { BodySummary } from '../utils/summary.ts';
 
 type Props = {
   planets: BodySummary[];
+  retrogrades?: Set<string>;
   styles?: SummaryStyles;
 };
 
-const Summary = ({ planets, styles }: Props) => {
+const Summary = ({ planets, retrogrades, styles }: Props) => {
   const s = {
     box: { ...summaryStyles.box, ...styles?.box },
     table: { ...summaryStyles.table, ...styles?.table },
@@ -18,6 +19,7 @@ const Summary = ({ planets, styles }: Props) => {
   };
 
   const nameDe = (n: string) => PLANETS_NAMES[n] ?? ASTEROID_NAMES[n] ?? n;
+  const retro = (n: string) => retrogrades?.has(n) ?? false;
 
   return (
     <div style={s.box}>
@@ -31,12 +33,17 @@ const Summary = ({ planets, styles }: Props) => {
           </tr>
         </thead>
         <tbody>
-          {planets.map((p) => (
+{planets.map((p) => (
             <tr key={p.name}>
-              <td style={s.td}>{nameDe(p.name)}</td>
+              <td style={s.td}>
+                {nameDe(p.name)}
+                {retro(p.name) && (
+                  <span style={{ fontWeight: 800, fontSize: 11, color: p.color, marginLeft: 6 }}>R</span>
+                )}
+              </td>
               <td style={s.td}>{SIGNS_NAMES[p.sign] ?? p.sign}</td>
-              <td style={s.td}>{p.house}</td>
               <td style={s.td}>{p.degree}</td>
+              <td style={s.td}>{p.house}</td>
             </tr>
           ))}
         </tbody>

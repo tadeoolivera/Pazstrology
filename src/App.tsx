@@ -146,7 +146,7 @@ export default function App() {
 
       {data && modal === 'planets' && (
         <Modal title="Posición de los cuerpos" onClose={() => setModal(null)}>
-          <Summary planets={data.planets} />
+          <Summary planets={data.planets} retrogrades={retrogrades} />
         </Modal>
       )}
       {data && modal === 'houses' && (
@@ -156,7 +156,7 @@ export default function App() {
       )}
       {data && modal === 'aspects' && (
         <Modal title="Aspectos de la carta" onClose={() => setModal(null)}>
-          <SummaryAspects aspects={data.aspects} />
+          <SummaryAspects aspects={data.aspects} retrogrades={retrogrades} />
         </Modal>
       )}
     </div>

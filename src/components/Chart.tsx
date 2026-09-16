@@ -113,6 +113,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
   const [retrogrades, setRetrogrades] = useState<Set<string>>(
     () => new Set(savedChart()?.retrogrades ?? [])
   );
+  const [highlightBody, setHighlightBody] = useState<string | null>(null);
   const historyRef = useRef<{ angles: number[]; ringRotation: number; planetAngles: (number | null)[]; asteroidAngles: (number | null)[]; retrogrades: string[] }[]>([]);
   const redoRef = useRef<{ angles: number[]; ringRotation: number; planetAngles: (number | null)[]; asteroidAngles: (number | null)[]; retrogrades: string[] }[]>([]);
   const pushHistory = useCallback(() => {
@@ -286,11 +287,13 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     if (planetDrag.current) {
       (e.target as Element).releasePointerCapture?.(e.pointerId);
       planetDrag.current = null;
+      setHighlightBody(null);
       return;
     }
     if (asteroidDrag.current) {
       (e.target as Element).releasePointerCapture?.(e.pointerId);
       asteroidDrag.current = null;
+      setHighlightBody(null);
       return;
     }
     if (!dragging) return;
@@ -304,6 +307,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     const base = planetAngles[idx];
     if (base === null) return;
     pushHistory();
+    setHighlightBody(PLANET_ORDER[idx]);
     (e.target as Element).setPointerCapture(e.pointerId);
     planetDrag.current = { idx, inicio: angleFromPointer(e), base };
   };
@@ -316,6 +320,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     const base = esNorth ? asteroidAngles[0] : asteroidAngles[idx];
     if (base === null) return;
     pushHistory();
+    setHighlightBody(ASTEROID_ORDER[idx]);
     (e.target as Element).setPointerCapture(e.pointerId);
     asteroidDrag.current = { idx: idxPar, inicio: angleFromPointer(e), base };
   };
@@ -625,12 +630,14 @@ const reset = () => {
             const P1 = toXY(mid - span / 2, arcRadius);
             const P2 = toXY(mid + span / 2, arcRadius);
             aspectLines.push({
+              n1: bodies[i].name,
+              n2: bodies[j].name,
               d: `M ${P1.x} ${P1.y} A ${arcRadius} ${arcRadius} 0 0 ${span > 0 ? 1 : 0} ${P2.x} ${P2.y}`,
               color: asp.color,
               aspecto: asp.name
             });
           } else {
-            aspectLines.push({ d: `M ${A.x} ${A.y} L ${B.x} ${B.y}`, color: asp.color, aspecto: asp.name });
+            aspectLines.push({ n1: bodies[i].name, n2: bodies[j].name, d: `M ${A.x} ${A.y} L ${B.x} ${B.y}`, color: asp.color, aspecto: asp.name });
           }
           break;
         }
@@ -831,16 +838,20 @@ const reset = () => {
         ))}
 
         {/* Líneas de los aspectos */}
-        {aspectLines.map((l, i) => (
-          <path
-            key={i}
-            d={l.d}
-            fill="none"
-            stroke={l.color}
-            strokeWidth={1.2}
-            strokeOpacity={0.7}
-          />
-        ))}
+        {aspectLines.map((l, i) => {
+          if (highlightBody !== null && l.n1 !== highlightBody && l.n2 !== highlightBody) return null;
+          const focused = highlightBody !== null;
+          return (
+            <path
+              key={i}
+              d={l.d}
+              fill="none"
+              stroke={l.color}
+              strokeWidth={focused ? 2 : 1.2}
+              strokeOpacity={focused ? 1 : 0.7}
+            />
+          );
+        })}
 
         {/* Marcas de planetas */}
         {planetAngles.map((a, idx) => {
@@ -851,8 +862,9 @@ const reset = () => {
           const B = toXY(a, RING_INNER - 30);
           const G = toXY(a, PLANETS_RADIUS);
           const isRetro = retrogrades.has(name);
+          const dimmed = highlightBody !== null && highlightBody !== name;
           return (
-            <g key={name} style={{ cursor: 'grab' }}>
+            <g key={name} style={{ cursor: 'grab', opacity: dimmed ? 0.3 : 1, transition: 'opacity 150ms' }}>
               <circle
                 cx={G.x}
                 cy={G.y}
@@ -888,8 +900,9 @@ const reset = () => {
           const B = toXY(a, RING_INNER - 30);
           const G = toXY(a, PLANETS_RADIUS);
           const isRetro = retrogrades.has(name);
+          const dimmed = highlightBody !== null && highlightBody !== name;
           return (
-            <g key={name} style={{ cursor: 'grab' }}>
+            <g key={name} style={{ cursor: 'grab', opacity: dimmed ? 0.3 : 1, transition: 'opacity 150ms' }}>
               <circle
                 cx={G.x}
                 cy={G.y}
