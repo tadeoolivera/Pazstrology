@@ -33,12 +33,12 @@ const Summary = ({ planets, retrogrades, styles }: Props) => {
           </tr>
         </thead>
         <tbody>
-{planets.map((p) => (
+          {planets.map((p) => (
             <tr key={p.name}>
               <td style={s.td}>
                 {nameDe(p.name)}
                 {retro(p.name) && (
-                  <span style={{ fontWeight: 800, fontSize: 11, color: p.color, marginLeft: 6 }}>R</span>
+                  <span style={{ fontWeight: 700, fontSize: 14, marginLeft: 6 }}>R</span>
                 )}
               </td>
               <td style={s.td}>{SIGNS_NAMES[p.sign] ?? p.sign}</td>

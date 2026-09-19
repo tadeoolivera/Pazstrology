@@ -4,11 +4,10 @@ import { summaryStyles, type SummaryStyles } from './summaryStyles.ts';
 
 type Props = {
   aspects: AspectSummary[];
-  retrogrades?: Set<string>;
   styles?: SummaryStyles;
 };
 
-const SummaryAspects = ({ aspects, retrogrades, styles }: Props) => {
+const SummaryAspects = ({ aspects, styles }: Props) => {
   const s = {
     box: { ...summaryStyles.box, ...styles?.box },
     table: { ...summaryStyles.table, ...styles?.table },
@@ -17,13 +16,9 @@ const SummaryAspects = ({ aspects, retrogrades, styles }: Props) => {
   };
 
   const nameDe = (n: string) => PLANETS_NAMES[n] ?? ASTEROID_NAMES[n] ?? n;
-  const retro = (n: string) => retrogrades?.has(n) ?? false;
-  const withRetro = (n: string, color: string) => (
+  const displayName = (n: string ) => (
     <>
       {nameDe(n)}
-      {retro(n) && (
-        <span style={{ fontWeight: 800, fontSize: 11, color, marginLeft: 4 }}>R</span>
-      )}
     </>
   );
 
@@ -50,9 +45,9 @@ const SummaryAspects = ({ aspects, retrogrades, styles }: Props) => {
                     verticalAlign: 'middle',
                   }}
                 />
-                {withRetro(a.name1, a.color)}
+                {displayName(a.name1)}
                 {` — `}
-                {withRetro(a.name2, a.color)}
+                {displayName(a.name2)}
                 {` (${a.aspect.charAt(0).toUpperCase() + a.aspect.slice(1)})`}
               </td>
               <td style={s.td}>{a.orb.toFixed(1)}°</td>

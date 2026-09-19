@@ -9,7 +9,6 @@ export type BodySummary = {
   name: string;
   sign: string;
   house: number;
-  color: string;
   degree: string;
 };
 
