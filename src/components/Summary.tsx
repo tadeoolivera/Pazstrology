@@ -42,8 +42,8 @@ const Summary = ({ planets, retrogrades, styles }: Props) => {
                 )}
               </td>
               <td style={s.td}>{SIGNS_NAMES[p.sign] ?? p.sign}</td>
-              <td style={s.td}>{p.degree}</td>
               <td style={s.td}>{p.house}</td>
+              <td style={s.td}>{p.degree}</td>
             </tr>
           ))}
         </tbody>
