@@ -5,8 +5,18 @@ export const ASPECTS = [
   { name: 'trígono', angle: 120, margin: 8, color: '#1614DF', minor: false },
   { name: 'sextil', angle: 60, margin: 6, color: '#1614DF', minor: false },
   { name: 'inconjunción', angle: 150, margin: 2, color: '#CCBD27', minor: true },
+  { name: 'sesquicuadratura', angle: 135, margin: 2, color: '#FF00FF', minor: true },
   { name: 'quintil', angle: 72, margin: 2, color: '#40CC27', minor: true },
   { name: 'biquintil', angle: 144, margin: 2, color: '#40CC27', minor: true }
 ] as const;
 
 export type Aspect = (typeof ASPECTS)[number];
+
+export const getAspectMargin = (aspect: Aspect, bodyNames: readonly string[]) => {
+  if (aspect.minor) return 1;
+  if (bodyNames.includes('lilith')) return Math.min(aspect.margin, 3);
+  if (bodyNames.includes('chiron') || bodyNames.includes('southNode') || bodyNames.includes('northNode')) {
+    return Math.min(aspect.margin, 6);
+  }
+  return aspect.margin;
+};

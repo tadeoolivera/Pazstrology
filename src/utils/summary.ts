@@ -1,7 +1,7 @@
 import { DIAMETER_COUNT } from '../data/config.tsx';
 import { PLANETS, PLANET_ORDER } from '../data/planets.tsx';
 import { ASTEROIDS, ASTEROID_ORDER } from '../data/asteroids.tsx';
-import { ASPECTS } from '../data/aspects.tsx';
+import { ASPECTS, getAspectMargin } from '../data/aspects.tsx';
 import { SIGN_ORDER } from '../data/signs.tsx';
 import { norm360, circularDistance } from './geo.ts';
 
@@ -151,7 +151,7 @@ export const calculateAspectSummaries = (
             (bodies[i].name === 'southNode' && bodies[j].name === 'northNode')) &&
           asp.name === 'oposición';
         if (isNodeOpposition) continue;
-        const margin = involvesAsteroid ? asp.margin - 1 : asp.margin;
+        const margin = getAspectMargin(asp, [bodies[i].name, bodies[j].name]);
         if (Math.abs(d - asp.angle) <= margin) {
           results.push({
             name1: bodies[i].name,

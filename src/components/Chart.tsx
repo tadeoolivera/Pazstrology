@@ -20,7 +20,7 @@ import {
 import { SIGNS, SIGN_ORDER } from '../data/signs.tsx';
 import { PLANETS, PLANET_ORDER, MAX_ELONGATION } from '../data/planets.tsx';
 import { ASTEROIDS, ASTEROID_ORDER } from '../data/asteroids.tsx';
-import { ASPECTS } from '../data/aspects.tsx';
+import { ASPECTS, getAspectMargin } from '../data/aspects.tsx';
 import { norm360, toXY, circularDistance } from '../utils/geo.ts';
 import { calculateChartData } from '../utils/summary.ts';
 
@@ -615,7 +615,7 @@ const reset = () => {
             (bodies[i].name === 'southNode' && bodies[j].name === 'northNode')) &&
           asp.name === 'oposición';
         if (isNodeOpposition) continue;
-        const margin = involvesAsteroid ? asp.margin - 1 : asp.margin;
+        const margin = getAspectMargin(asp, [bodies[i].name, bodies[j].name]);
         if (Math.abs(d - asp.angle) <= margin) {
           const A = toXY(bodies[i].angle, ASPECTS_RADIUS);
           const B = toXY(bodies[j].angle, ASPECTS_RADIUS);
