@@ -156,7 +156,7 @@ export default function App() {
       )}
       {data && modal === 'aspects' && (
         <Modal title="Aspectos de la carta" onClose={() => setModal(null)}>
-          <SummaryAspects aspects={data.aspects} retrogrades={retrogrades} />
+          <SummaryAspects aspects={data.aspects} />
         </Modal>
       )}
     </div>
