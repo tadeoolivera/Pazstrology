@@ -13,10 +13,17 @@ export const ASPECTS = [
 export type Aspect = (typeof ASPECTS)[number];
 
 export const getAspectMargin = (aspect: Aspect, bodyNames: readonly string[]) => {
-  if (aspect.minor) return 1;
-  if (bodyNames.includes('lilith')) return Math.min(aspect.margin, 3);
-  if (bodyNames.includes('chiron') || bodyNames.includes('southNode') || bodyNames.includes('northNode')) {
-    return Math.min(aspect.margin, 6);
-  }
+  if (bodyNames.includes('lilith') && !aspect.minor) 
+    return 3;
+
+  if (bodyNames.includes('lilith') && aspect.minor) 
+    return 1;
+
+  if (bodyNames.includes('chiron') || bodyNames.includes('southNode') || bodyNames.includes('northNode') && !aspect.minor) 
+    return 6;
+
+  if (bodyNames.includes('chiron') || bodyNames.includes('southNode') || bodyNames.includes('northNode') && aspect.minor) 
+    return 1;
+
   return aspect.margin;
 };

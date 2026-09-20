@@ -22,6 +22,7 @@ const SummaryHouses = ({ houses, styles }: Props) => {
           <tr>
             <th style={s.th}>Casa</th>
             <th style={s.th}>Signo</th>
+            <th style={s.th}>Cúspide</th>
           </tr>
         </thead>
         <tbody>
@@ -29,6 +30,7 @@ const SummaryHouses = ({ houses, styles }: Props) => {
             <tr key={c.house}>
               <td style={s.td}>Casa {c.house}</td>
               <td style={s.td}>{SIGNS_NAMES[c.sign] ?? c.sign}</td>
+              <td style={s.td}>{c.degree}</td>
             </tr>
           ))}
         </tbody>

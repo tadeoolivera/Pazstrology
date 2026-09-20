@@ -13,6 +13,8 @@ export const NUMBERS_RING_OUTER = NUMBERS_RING_INNER + 50;
 export const SIZE = (NUMBERS_RING_OUTER + 20) * 2;
 export const CENTER = SIZE / 2;
 
+// Radio en el que se ubican los planetas
 export const PLANETS_RADIUS = RING_INNER - PLANET_ICON_SIZE - 19;
 
+// Radio en el que se ubican los aspectos (un poco más chico que el de los plnetas)
 export const ASPECTS_RADIUS = PLANETS_RADIUS - 18;

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import Chart, { type ChartActions } from './components/Chart.tsx';
-import Summary from './components/Summary.tsx';
+import Summary from './components/SummaryBodies.tsx';
 import SummaryHouses from './components/SummaryHouses.tsx';
 import SummaryAspects from './components/SummaryAspects.tsx';
 import Modal from './components/Modal.tsx';

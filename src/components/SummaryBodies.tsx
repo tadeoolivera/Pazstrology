@@ -10,7 +10,7 @@ type Props = {
   styles?: SummaryStyles;
 };
 
-const Summary = ({ planets, retrogrades, styles }: Props) => {
+const SummaryBodies = ({ planets, retrogrades, styles }: Props) => {
   const s = {
     box: { ...summaryStyles.box, ...styles?.box },
     table: { ...summaryStyles.table, ...styles?.table },
@@ -52,4 +52,4 @@ const Summary = ({ planets, retrogrades, styles }: Props) => {
   );
 };
 
-export default Summary;
+export default SummaryBodies;
