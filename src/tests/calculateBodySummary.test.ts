@@ -7,7 +7,7 @@ describe('calculateBodySummaries', () => {
 
   const bypass = expect.any(String); // Bypass para el color
 
-  // Casos de prueba con respecto a cartas de prueba desde JSON que fueron previamente calculadas y verificadas manualmente
+  // Casos de prueba con respecto a cartas de prueba pasadas por JSON que fueron previamente calculadas y verificadas manualmente
   it('Debe calcular el resúmen entre casa, signo, cuerpo y grado correctamente acorde a los datos de la carta C1', () => {  
     const result = calculateBodySummaries(C1.angles, C1.ringRotation, C1.planetAngles, C1.asteroidAngles);
     expect(result).toEqual([
