@@ -204,6 +204,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     e.preventDefault();
     e.stopPropagation();
     pushHistory();
+    if (d === 0 || d === 6) return
     setDragging({ d, isPrimary });
     (e.target as Element).setPointerCapture(e.pointerId);
     move(d, isPrimary, e);
@@ -826,8 +827,8 @@ const reset = () => {
                     .map((pt) => `${pt.x.toFixed(2)},${pt.y.toFixed(2)}`)
                     .join(' ')}
                   fill="transparent"
-                  style={{ cursor: 'grab', touchAction: 'none' }}
-                  onPointerDown={handlePointerDown(p.d, p.isPrimary)}
+                  style={p.d === 0 || p.d === 6 ? { cursor: 'default', touchAction: 'none' } : { cursor: 'grab', touchAction: 'none' }}
+                  onPointerDown={p.d === 0 || p.d === 6 ? undefined : handlePointerDown(p.d, p.isPrimary)}
                 />
               </g>
             );
