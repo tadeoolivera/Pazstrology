@@ -544,7 +544,9 @@ const reset = () => {
     const sig = sortedPoints[(i + 1) % sortedPoints.length];
     const mid = norm360(p.angle + norm360(sig.angle - p.angle) / 2);
     const pos = toXY(mid, (NUMBERS_RING_INNER + NUMBERS_RING_OUTER) / 2);
-    const num = (((p.isPrimary ? 12 - p.d : 6 - p.d) + 8) % 12) + 1;
+    
+    const num = p.isPrimary ? p.d + 1 : p.d + 7;
+    
     return { x: pos.x, y: pos.y, num };
   });
 
