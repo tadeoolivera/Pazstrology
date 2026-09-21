@@ -17,7 +17,6 @@ describe('getAspectMargin', () => {
     const result = getAspectMargin(majorAspect, ['sun', 'moon'])
     expect(result).toBe(8)
   })
-
   it('1.2. Debe devolver el margen del aspecto menor correspondiente si no incluye a Lilith, Chiron o los nodos', () => {
     const result = getAspectMargin(minorAspect, ['sun', 'moon'])
     expect(result).toBe(2)
@@ -28,7 +27,6 @@ describe('getAspectMargin', () => {
     const result = getAspectMargin(majorAspect, ['lilith', 'sun'])
     expect(result).toBe(3)
   })
-
   it('2.2. Debe devolver 1 si incluye a Lilith en un aspecto menor', () => {
     const result = getAspectMargin(minorAspect, ['lilith', 'sun'])
     expect(result).toBe(1)
@@ -39,7 +37,6 @@ describe('getAspectMargin', () => {
     const result = getAspectMargin(majorAspect, ['chiron', 'sun'])
     expect(result).toBe(6)
   })
-
   it('3.2. Debe devolver 1 si incluye a Chiron en un aspecto menor', () => {
     const result = getAspectMargin(minorAspect, ['chiron', 'sun'])
     expect(result).toBe(1)
@@ -50,7 +47,6 @@ describe('getAspectMargin', () => {
     const result = getAspectMargin(majorAspect, ['northNode', 'sun'])
     expect(result).toBe(6)
   })
-
   it('4.2. Debe devolver 1 si incluye al nodo norte en un aspecto menor', () => {
     const result = getAspectMargin(minorAspect, ['northNode', 'sun'])
     expect(result).toBe(1)
@@ -61,7 +57,6 @@ describe('getAspectMargin', () => {
     const result = getAspectMargin(majorAspect, ['southNode', 'sun'])
     expect(result).toBe(6)
   })
-
   it('5.2. Debe devolver 1 si incluye al nodo sur en un aspecto menor', () => {
     const result = getAspectMargin(minorAspect, ['southNode', 'sun'])
     expect(result).toBe(1)
