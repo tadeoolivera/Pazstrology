@@ -49,10 +49,7 @@ const partitionPoints = (angles: number[]): PartitionPoint[] => {
   return points;
 };
 
-const houseOf = (p: PartitionPoint) => (((p.isPrimary ? 12 - p.d : 6 - p.d) + 8) % 12) + 1;
-
-const signOfBody = (a: number, ringRotation: number) =>
-  SIGN_ORDER[Math.floor(norm360(a - ringRotation - 1e-7) / 30) % 12];
+const houseOf = (p: PartitionPoint) => p.isPrimary ? p.d + 1 : p.d + 7;
 
 export const getCuspDetails = (astroCuspAngle: number, astroRingRotation: number) => {
   const relativeAngle = norm360(astroCuspAngle - astroRingRotation);
@@ -80,42 +77,23 @@ export const calculateBodySummaries = (
   const houseCusps = partitionPoints(bodyAngles); 
 
   const getBodySummary = (absoluteAngle: number) => { 
-    // Ajuste para la búsqueda de la casa astrológica (0 grados equivale a 360)
-    const angleForHouseSearch = absoluteAngle === 0 ? 360 : absoluteAngle; 
+    const { sign, degree } = getCuspDetails(absoluteAngle, zodiacRingRotation);
 
-    // Encontrar en qué casa cae el cuerpo celeste
-    const houseCuspIndex = houseCusps.findIndex((currentCusp, currentIndex) => { 
+    const matchingCusp = houseCusps.find((currentCusp, currentIndex) => { 
       const nextCusp = houseCusps[(currentIndex + 1) % houseCusps.length]; 
-      const houseEndAngle = currentIndex === houseCusps.length - 1 ? nextCusp.angle + 360 : nextCusp.angle; 
-      return angleForHouseSearch > currentCusp.angle && angleForHouseSearch <= houseEndAngle;
+      
+      const houseSize = norm360(nextCusp.angle - currentCusp.angle);
+      const distanceToPlanet = norm360(absoluteAngle - currentCusp.angle);
+      
+      return distanceToPlanet >= 0 && distanceToPlanet < houseSize;
     });
 
-    const matchingHouse = houseCusps[houseCuspIndex >= 0 ? houseCuspIndex : houseCusps.length - 1]; 
-
-    // Cálculo de la posición exacta dentro del signo zodiacal (porciones de 30 grados)
-    const relativeZodiacAngle = norm360(absoluteAngle - zodiacRingRotation); 
-    const rawPositionInSign = relativeZodiacAngle % 30; 
-    const floatingPointTolerance = 1e-7; 
-    
-    let decimalDegreesInSign: number; 
-
-    // Manejo del límite exacto entre signos para evitar saltos por redondeo
-    if (rawPositionInSign < floatingPointTolerance || Math.abs(rawPositionInSign - 30) < floatingPointTolerance) {
-      decimalDegreesInSign = 29 + 59/60; // Lo fuerza a 29°59'
-    } else {
-      // Invierte la dirección del ángulo para que coincida con el sentido antihorario astrológico
-      decimalDegreesInSign = rawPositionInSign % 30;
-    }
-
-    // Conversión a grados y minutos (sexagesimal)
-    const integerDegrees = Math.floor(decimalDegreesInSign); 
-    const arcMinutes = Math.floor((decimalDegreesInSign - integerDegrees) * 60); 
-    const formattedDegree = `${integerDegrees}°${arcMinutes}'`; 
+    const finalHouse = matchingCusp ? houseOf(matchingCusp) : houseOf(houseCusps[0]);
 
     return { 
-      sign: signOfBody(absoluteAngle, zodiacRingRotation), 
-      house: houseOf(matchingHouse), 
-      degree: formattedDegree 
+      sign: sign, 
+      house: finalHouse, 
+      degree: degree 
     };
   };
   
@@ -138,6 +116,7 @@ export const calculateBodySummaries = (
       color: ASTEROIDS[name as keyof typeof ASTEROIDS].color,
     }];
   });
+  
   return [...planets, ...asteroids];
 };
 

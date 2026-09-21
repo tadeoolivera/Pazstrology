@@ -32,32 +32,32 @@ describe('getAspectMargin', () => {
     expect(result).toBe(1)
   })
 
-  // 3. Casos con Chiron
-  it('3.1. Debe devolver 6 si incluye a Chiron en un aspecto mayor', () => {
+  // 3. Casos con Quirón
+  it('3.1. Debe devolver 6 si incluye a Quirón en un aspecto mayor', () => {
     const result = getAspectMargin(majorAspect, ['chiron', 'sun'])
     expect(result).toBe(6)
   })
-  it('3.2. Debe devolver 1 si incluye a Chiron en un aspecto menor', () => {
+  it('3.2. Debe devolver 1 si incluye a Quirón en un aspecto menor', () => {
     const result = getAspectMargin(minorAspect, ['chiron', 'sun'])
     expect(result).toBe(1)
   })
 
-  // 4. Casos con el nodo norte
-  it('4.1. Debe devolver 6 si incluye al nodo norte en un aspecto mayor', () => {
+  // 4. Casos con el Nodo Norte
+  it('4.1. Debe devolver 6 si incluye al Nodo Norte en un aspecto mayor', () => {
     const result = getAspectMargin(majorAspect, ['northNode', 'sun'])
     expect(result).toBe(6)
   })
-  it('4.2. Debe devolver 1 si incluye al nodo norte en un aspecto menor', () => {
+  it('4.2. Debe devolver 1 si incluye al Nodo Norte en un aspecto menor', () => {
     const result = getAspectMargin(minorAspect, ['northNode', 'sun'])
     expect(result).toBe(1)
   })
 
-  // 5. Casos con el nodo sur
-  it('5.1. Debe devolver 6 si incluye al nodo sur en un aspecto mayor', () => {
+  // 5. Casos con el Nodo Sur
+  it('5.1. Debe devolver 6 si incluye al Nodo Sur en un aspecto mayor', () => {
     const result = getAspectMargin(majorAspect, ['southNode', 'sun'])
     expect(result).toBe(6)
   })
-  it('5.2. Debe devolver 1 si incluye al nodo sur en un aspecto menor', () => {
+  it('5.2. Debe devolver 1 si incluye al Nodo Sur en un aspecto menor', () => {
     const result = getAspectMargin(minorAspect, ['southNode', 'sun'])
     expect(result).toBe(1)
   })
