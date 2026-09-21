@@ -49,7 +49,7 @@ const partitionPoints = (angles: number[]): PartitionPoint[] => {
   return points;
 };
 
-const houseOf = (p: PartitionPoint) => p.isPrimary ? p.d + 1 : p.d + 7;
+export const houseOf = (p: PartitionPoint) => p.isPrimary ? p.d + 1 : p.d + 7;
 
 export const getCuspDetails = (astroCuspAngle: number, astroRingRotation: number) => {
   const relativeAngle = norm360(astroCuspAngle - astroRingRotation);

@@ -1,0 +1,34 @@
+{
+  "angles": [
+    0,
+    30,
+    60,
+    90,
+    120,
+    150
+  ],
+  "ringRotation": 0,
+  "planetAngles": [
+    0,
+    30,
+    14,
+    24,
+    120,
+    150,
+    180,
+    210,
+    240,
+    270
+  ],
+  "asteroidAngles": [
+    15,
+    195,
+    75,
+    105
+  ],
+  "showMinorAspects": true,
+  "showMajorAspects": true,
+  "showAsteroidAspects": true,
+  "showNodeAspects": true,
+  "retrogrades": []
+}
