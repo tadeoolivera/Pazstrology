@@ -19,6 +19,9 @@ export const ELEMENT_COLORS = {
 };
 
 export const SIGNS = {
+  aries: <AriesIcon color={ELEMENT_COLORS.fire} />,
+  taurus: <TaurusIcon color={ELEMENT_COLORS.earth} />,
+  gemini: <GeminiIcon color={ELEMENT_COLORS.air} />,
   cancer: <CancerIcon color={ELEMENT_COLORS.water} />,
   leo: <LeoIcon color={ELEMENT_COLORS.fire} />,
   virgo: <VirgoIcon color={ELEMENT_COLORS.earth} />,
@@ -27,10 +30,7 @@ export const SIGNS = {
   sagittarius: <SagittariusIcon color={ELEMENT_COLORS.fire} />,
   capricorn: <CapricornIcon color={ELEMENT_COLORS.earth} />,
   aquarius: <AquariusIcon color={ELEMENT_COLORS.air} />,
-  pisces: <PiscesIcon color={ELEMENT_COLORS.water} />,
-  aries: <AriesIcon color={ELEMENT_COLORS.fire} />,
-  taurus: <TaurusIcon color={ELEMENT_COLORS.earth} />,
-  gemini: <GeminiIcon color={ELEMENT_COLORS.air} />
+  pisces: <PiscesIcon color={ELEMENT_COLORS.water} />
 };
 
-export const SIGN_ORDER = ['sagittarius', 'scorpio', 'libra', 'virgo', 'leo', 'cancer', 'gemini', 'taurus', 'aries', 'pisces', 'aquarius', 'capricorn'] as const;
+export const SIGN_ORDER = ['aries', 'taurus', 'gemini', 'cancer', 'leo', 'virgo', 'libra', 'scorpio', 'sagittarius', 'capricorn', 'aquarius', 'pisces'] as const;

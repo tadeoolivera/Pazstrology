@@ -21,7 +21,7 @@ import { SIGNS, SIGN_ORDER } from '../data/signs.tsx';
 import { PLANETS, PLANET_ORDER, MAX_ELONGATION } from '../data/planets.tsx';
 import { ASTEROIDS, ASTEROID_ORDER } from '../data/asteroids.tsx';
 import { ASPECTS, getAspectMargin } from '../data/aspects.tsx';
-import { norm360, toXY, circularDistance } from '../utils/geo.ts';
+import { norm360, toXY, circularDistance, pointerToAstroAngle } from '../utils/geo.ts';
 import { calculateChartData } from '../utils/summary.ts';
 
 export type ChartActions = {
@@ -150,8 +150,8 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     const py = (e.clientY - rect.top) * scaleY;
     const dx = px - CENTER;
     const dy = py - CENTER;
-    const a = (Math.atan2(dy, dx) * 180) / Math.PI + 90;
-    return norm360(a);
+    
+    return pointerToAstroAngle(dx, dy);
   };
 
   const gapsFor = (pointAngle: number, others: number[]) => {
@@ -560,10 +560,10 @@ const reset = () => {
     const pj = toXY(b, RING_INNER);
     const pi2 = toXY(a, RING_OUTER);
     const pj2 = toXY(b, RING_OUTER);
-    return `M ${pi.x} ${pi.y} A ${RING_INNER} ${RING_INNER} 0 0 1 ${pj.x} ${pj.y} L ${pj2.x} ${pj2.y} A ${RING_OUTER} ${RING_OUTER} 0 0 0 ${pi2.x} ${pi2.y} Z`;
+    return `M ${pi.x} ${pi.y} A ${RING_INNER} ${RING_INNER} 0 0 0 ${pj.x} ${pj.y} L ${pj2.x} ${pj2.y} A ${RING_OUTER} ${RING_OUTER} 0 0 1 ${pi2.x} ${pi2.y} Z`;
   });
 
-  const ringsNumeros = sortedPoints.map((p, i) => {
+  const ringsNum = sortedPoints.map((p, i) => {
     const sig = sortedPoints[(i + 1) % sortedPoints.length];
     const a = p.angle;
     const b = sig.angle;
@@ -571,7 +571,7 @@ const reset = () => {
     const pj = toXY(b, NUMBERS_RING_INNER);
     const pi2 = toXY(a, NUMBERS_RING_OUTER);
     const pj2 = toXY(b, NUMBERS_RING_OUTER);
-    return `M ${pi.x} ${pi.y} A ${NUMBERS_RING_INNER} ${NUMBERS_RING_INNER} 0 0 1 ${pj.x} ${pj.y} L ${pj2.x} ${pj2.y} A ${NUMBERS_RING_OUTER} ${NUMBERS_RING_OUTER} 0 0 0 ${pi2.x} ${pi2.y} Z`;
+    return `M ${pi.x} ${pi.y} A ${NUMBERS_RING_INNER} ${NUMBERS_RING_INNER} 0 0 0 ${pj.x} ${pj.y} L ${pj2.x} ${pj2.y} A ${NUMBERS_RING_OUTER} ${NUMBERS_RING_OUTER} 0 0 1 ${pi2.x} ${pi2.y} Z`;
   });
 
   const ticks = [];
@@ -763,9 +763,9 @@ const reset = () => {
           ))}
         </g>
 
-        {/* Anillo de las houses */}
+        {/* Anillo de las casas */}
         <g>
-          {ringsNumeros.map((d, i) => (
+          {ringsNum.map((d, i) => (
             <path key={i} d={d} fill={"white"} stroke={BORDER_COLOR} strokeWidth={0.5} />
           ))}
           {wheelNumbers.map((n) => (

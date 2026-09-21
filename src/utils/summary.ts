@@ -54,32 +54,21 @@ const houseOf = (p: PartitionPoint) => (((p.isPrimary ? 12 - p.d : 6 - p.d) + 8)
 const signOfBody = (a: number, ringRotation: number) =>
   SIGN_ORDER[Math.floor(norm360(a - ringRotation - 1e-7) / 30) % 12];
 
-const getCuspDetails = (cuspAngle: number, zodiacRingRotation: number) => {
-  // 1. Obtenemos el signo (usando la corrección exacta que hicimos antes)
-  const signIndex = Math.floor(norm360(cuspAngle - zodiacRingRotation - 1e-7) / 30) % 12;
+export const getCuspDetails = (astroCuspAngle: number, astroRingRotation: number) => {
+  const relativeAngle = norm360(astroCuspAngle - astroRingRotation);
+
+  let cleanAngle = Math.round(relativeAngle * 10000) / 10000;
+  if (cleanAngle === 360) cleanAngle = 0; 
+
+  const signIndex = Math.floor(cleanAngle / 30) % 12;
   const sign = SIGN_ORDER[signIndex];
 
-  // 2. Extraemos la misma lógica matemática que calculaba los grados para los planetas
-  const relativeZodiacAngle = norm360(cuspAngle - zodiacRingRotation);
-  const rawPositionInSign = relativeZodiacAngle % 30;
-  const floatingPointTolerance = 1e-7;
+  const decimalDegreesInSign = cleanAngle % 30;
 
-  let decimalDegreesInSign: number;
-
-  // Manejo del límite exacto entre signos
-  if (rawPositionInSign < floatingPointTolerance || Math.abs(rawPositionInSign - 30) < floatingPointTolerance) {
-    decimalDegreesInSign = 29 + 59/60; 
-  } else {
-    // Inversión de dirección a sentido antihorario
-    decimalDegreesInSign = (30 - rawPositionInSign) % 30;
-  }
-
-  // 3. Conversión a grados y minutos
   const integerDegrees = Math.floor(decimalDegreesInSign);
   const arcMinutes = Math.floor((decimalDegreesInSign - integerDegrees) * 60);
-  const formattedDegree = `${integerDegrees}°${arcMinutes}'`;
 
-  return { sign, degree: formattedDegree };
+  return { sign, degree: `${integerDegrees}°${arcMinutes}'` };
 };
 
 export const calculateBodySummaries = (
@@ -115,7 +104,7 @@ export const calculateBodySummaries = (
       decimalDegreesInSign = 29 + 59/60; // Lo fuerza a 29°59'
     } else {
       // Invierte la dirección del ángulo para que coincida con el sentido antihorario astrológico
-      decimalDegreesInSign = (30 - rawPositionInSign) % 30;
+      decimalDegreesInSign = rawPositionInSign % 30;
     }
 
     // Conversión a grados y minutos (sexagesimal)
@@ -156,12 +145,8 @@ export const calculateHouseSummaries = (houseAngles: number[], zodiacRingRotatio
   const houseCusps = partitionPoints(houseAngles); 
   
   return houseCusps
-    .map((cusp, index) => {
-      // Tomamos la línea opuesta que representa el inicio del arco que define la casa en sentido anti-horario (así se considera la cúspide en astrología)
-      const oppositeLine = houseCusps[(index + 1) % houseCusps.length];
-      
-      // Guardo el signo como los grados exactos
-      const { sign, degree } = getCuspDetails(oppositeLine.angle, zodiacRingRotation);
+    .map((cusp) => {
+      const { sign, degree } = getCuspDetails(cusp.angle, zodiacRingRotation);
       
       return {
         house: houseOf(cusp),
@@ -171,6 +156,7 @@ export const calculateHouseSummaries = (houseAngles: number[], zodiacRingRotatio
     })
     .sort((a, b) => a.house - b.house); 
 };
+
 export type SummaryBody = { name: string; angle: number; isAsteroid: boolean };
 
 export const calculateAspectSummaries = (
