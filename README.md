@@ -22,14 +22,12 @@ También podés descargarla o cargarla desde un archivo.
 
 ---
 
-## Tecnología
-
-Hecho con herramientas simples y modernas:
+## Stack
 
 - [React](https://react.dev) + [TypeScript](https://www.typescriptlang.org)
-- [Vite](https://vite.dev) como empaquetador
-- [Tailwind CSS](https://tailwindcss.com) para los estilos
-- La carta está dibujada en **SVG**, dentro de un único componente `Chart`
+- [Vite](https://vite.dev)
+- [Tailwind CSS](https://tailwindcss.com)
+- [Vercel](https://vercel.com)
 
 ---
 
