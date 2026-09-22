@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { CSSProperties } from 'react';
 import Chart, { type ChartActions } from './components/Chart.tsx';
 import Summary from './components/SummaryBodies.tsx';
@@ -6,6 +6,7 @@ import SummaryHouses from './components/SummaryHouses.tsx';
 import SummaryAspects from './components/SummaryAspects.tsx';
 import Modal from './components/Modal.tsx';
 import BodyPanel from './components/BodyPanel.tsx';
+import SpringGift from './components/SpringGift.tsx';
 import type { ChartData } from './utils/summary.ts';
 
 type ModalView = 'planets' | 'houses' | 'aspects' | null;
@@ -30,6 +31,84 @@ export default function App() {
   const [syncRotation, setSyncRotation] = useState(false);
   const [retrogrades, setRetrogrades] = useState<Set<string>>(new Set());
   const chartRef = useRef<ChartActions>(null);
+
+  /* ── 🌼 Spring easter egg for Paz ────────────────────────────── */
+  const [giftOpen, setGiftOpen] = useState(false);
+  const [flowerHint, setFlowerHint] = useState('');
+  const keyBuffer = useRef('');
+  const keyTimer = useRef<number | null>(null);
+  const tapCount = useRef(0);
+  const tapTimer = useRef<number | null>(null);
+
+  const openGift = useCallback(() => {
+    setGiftOpen(true);
+    setFlowerHint('');
+    tapCount.current = 0;
+    keyBuffer.current = '';
+  }, []);
+
+  // Open via secret URL: ?flores / ?gift=primavera / ?para=paz / #flores-amarillas
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.toLowerCase();
+    const secretParam =
+      params.has('flores') ||
+      params.has('primavera') ||
+      params.get('gift') === 'primavera' ||
+      params.get('para')?.toLowerCase() === 'paz';
+    const secretHash = hash.includes('flores-amarillas') || hash.includes('primavera') || hash.includes('para-paz');
+    if (secretParam || secretHash) {
+      openGift();
+      // clean the URL so it stays a secret, not a shareable spoiler
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState(null, '', cleanUrl);
+    }
+  }, [openGift]);
+
+  // Open by typing "paz", "flores" or "primavera" anywhere (desktop-friendly)
+  useEffect(() => {
+    if (giftOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key.length !== 1) return;
+      const ch = e.key.toLowerCase();
+      if (!/[a-zñáéíóúü]/i.test(ch)) return;
+      keyBuffer.current = (keyBuffer.current + ch).slice(-10);
+      if (keyTimer.current) window.clearTimeout(keyTimer.current);
+      keyTimer.current = window.setTimeout(() => {
+        keyBuffer.current = '';
+      }, 2000);
+      const buf = keyBuffer.current;
+      if (buf.endsWith('paz') || buf.endsWith('flores') || buf.endsWith('primavera')) {
+        openGift();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      if (keyTimer.current) window.clearTimeout(keyTimer.current);
+    };
+  }, [giftOpen, openGift]);
+
+  // Hidden flower needs 3 loving taps (mobile-friendly + tellable secret)
+  const handleFlowerTap = useCallback(() => {
+    tapCount.current += 1;
+    if (tapTimer.current) window.clearTimeout(tapTimer.current);
+    tapTimer.current = window.setTimeout(() => {
+      tapCount.current = 0;
+      setFlowerHint('');
+    }, 1500);
+
+    if (tapCount.current >= 3) {
+      if (tapTimer.current) window.clearTimeout(tapTimer.current);
+      tapCount.current = 0;
+      openGift();
+    } else if (tapCount.current === 1) {
+      setFlowerHint('otra vez… 👀');
+    } else if (tapCount.current === 2) {
+      setFlowerHint('una más… 💛');
+    }
+  }, [openGift]);
 
   return (
     <div className="App px-6 py-6 md:py-0 md:px-0">
@@ -144,6 +223,21 @@ export default function App() {
         </div>
       </div>
 
+      {/* ── sneaky little footer flower: tap 3x for a surprise 🌼 ── */}
+      <footer className="mt-10 flex flex-col items-center gap-1 pb-6 select-none">
+        <button
+          onClick={handleFlowerTap}
+          aria-label="Tocame 3 veces"
+          className="text-lg opacity-30 transition-all hover:scale-125 hover:opacity-100 active:scale-95"
+          style={{ cursor: 'pointer', background: 'none', border: 'none' }}
+        >
+          ❓❓❓
+        </button>
+        <div className="h-4 text-xs text-[#A68A5B]" aria-live="polite">
+          {flowerHint}
+        </div>
+      </footer>
+
       {data && modal === 'planets' && (
         <Modal title="Posición de los cuerpos" onClose={() => setModal(null)}>
           <Summary planets={data.planets} retrogrades={retrogrades} />
@@ -159,6 +253,8 @@ export default function App() {
           <SummaryAspects aspects={data.aspects} />
         </Modal>
       )}
+
+      {giftOpen && <SpringGift onClose={() => setGiftOpen(false)} />}
     </div>
   );
 }
