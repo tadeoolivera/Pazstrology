@@ -5,9 +5,9 @@ import VenusIcon from 'zodiacfonts/icons/main-planets/venus.svg?react';
 import MarsIcon from 'zodiacfonts/icons/main-planets/mars.svg?react';
 import JupiterIcon from 'zodiacfonts/icons/main-planets/jupiter.svg?react';
 import SaturnIcon from 'zodiacfonts/icons/main-planets/saturn.svg?react';
-import UranusPng from '../assets/uranus.png';
+import UranusPng from '/uranus.png';
 import NeptuneIcon from 'zodiacfonts/icons/main-planets/neptune.svg?react';
-import PlutoPng from '../assets/pluto.png';
+import PlutoPng from '/pluto.png';
 
 import { norm360 } from '../utils/geo.ts';
 
