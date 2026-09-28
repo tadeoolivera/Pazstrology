@@ -753,6 +753,10 @@ const reset = () => {
     return () => window.removeEventListener('keydown', handler);
   }, [angles, ringRotation, planetAngles, asteroidAngles, retrogrades]);
 
+  const bodyRender: Array<
+    (typeof PLANET_ORDER)[number] | (typeof ASTEROID_ORDER)[number]
+  > = [...PLANET_ORDER, ...ASTEROID_ORDER].reverse();
+
   return (
     <div style={styles.wrapper}>
       <svg
@@ -887,53 +891,24 @@ const reset = () => {
         ))}
 
         {/* Marcas de planetas */}
-        {planetAngles.map((a, idx) => {
+        {bodyRender.map((name) => {
+          const planetIndex = PLANET_ORDER.indexOf(name as (typeof PLANET_ORDER)[number]);
+          const isPlanet = planetIndex >= 0;
+          const bodyIndex = isPlanet
+            ? planetIndex
+            : ASTEROID_ORDER.indexOf(name as (typeof ASTEROID_ORDER)[number]);
+          const a = isPlanet ? planetAngles[bodyIndex] : visibleAsteroidAngles[bodyIndex];
           if (a === null) return null;
-          const name = PLANET_ORDER[idx];
-          const planeta = PLANETS[name];
-          const A = toXY(a, RING_INNER);
-          const B = toXY(a, RING_INNER - 30);
-          const G = toXY(a, PLANETS_RADIUS);
-          const isRetro = retrogrades.has(name);
-          const dimmed = highlightBody !== null && highlightBody !== name;
-          return (
-            <g key={name} style={{ cursor: 'grab', opacity: dimmed ? 0.3 : 1, transition: 'opacity 150ms' }}>
-              <circle
-                cx={G.x}
-                cy={G.y}
-                r={16}
-                fill="transparent"
-                onPointerDown={startPlanetDrag(idx)}
-              />
-              <line
-                x1={A.x}
-                y1={A.y}
-                x2={B.x}
-                y2={B.y}
-                stroke={planeta.color}
-                strokeWidth={1.6}
-                onPointerDown={startPlanetDrag(idx)}
-              />
-              <g transform={`translate(${G.x - PLANET_ICON_SIZE / 2}, ${G.y - PLANET_ICON_SIZE / 2})`} onPointerDown={startPlanetDrag(idx)}>
-                {cloneElement(planeta.icon, { width: PLANET_ICON_SIZE, height: PLANET_ICON_SIZE })}
-              </g>
-              {isRetro && (
-                <text x={G.x + 20} y={G.y - 10} fontSize={11} fontWeight="800" fill={planeta.color} textAnchor="middle">R</text>
-              )}
-            </g>
-          );
-        })}
 
-        {/* Marcas de asteroides */}
-        {visibleAsteroidAngles.map((a, idx) => {
-          if (a === null) return null;
-          const name = ASTEROID_ORDER[idx];
-          const isAsteroid = ASTEROIDS[name];
+          const body = isPlanet
+            ? PLANETS[name as (typeof PLANET_ORDER)[number]]
+            : ASTEROIDS[name as (typeof ASTEROID_ORDER)[number]];
           const A = toXY(a, RING_INNER);
           const B = toXY(a, RING_INNER - 30);
           const G = toXY(a, PLANETS_RADIUS);
           const isRetro = retrogrades.has(name);
           const dimmed = highlightBody !== null && highlightBody !== name;
+
           return (
             <g key={name} style={{ cursor: 'grab', opacity: dimmed ? 0.3 : 1, transition: 'opacity 150ms' }}>
               <circle
@@ -941,22 +916,22 @@ const reset = () => {
                 cy={G.y}
                 r={16}
                 fill="transparent"
-                onPointerDown={startAsteroidDrag(idx)}
+                onPointerDown={isPlanet ? startPlanetDrag(bodyIndex) : startAsteroidDrag(bodyIndex)}
               />
               <line
                 x1={A.x}
                 y1={A.y}
                 x2={B.x}
                 y2={B.y}
-                stroke={isAsteroid.color}
+                stroke={body.color}
                 strokeWidth={1.6}
-                onPointerDown={startAsteroidDrag(idx)}
+                onPointerDown={isPlanet ? startPlanetDrag(bodyIndex) : startAsteroidDrag(bodyIndex)}
               />
-              <g transform={`translate(${G.x - PLANET_ICON_SIZE / 2}, ${G.y - PLANET_ICON_SIZE / 2})`} onPointerDown={startAsteroidDrag(idx)}>
-                {cloneElement(isAsteroid.icon, { width: PLANET_ICON_SIZE, height: PLANET_ICON_SIZE })}
+              <g transform={`translate(${G.x - PLANET_ICON_SIZE / 2}, ${G.y - PLANET_ICON_SIZE / 2})`} onPointerDown={isPlanet ? startPlanetDrag(bodyIndex) : startAsteroidDrag(bodyIndex)}>
+                {cloneElement(body.icon, { width: PLANET_ICON_SIZE, height: PLANET_ICON_SIZE })}
               </g>
               {isRetro && (
-                <text x={G.x + 20} y={G.y - 10} fontSize={11} fontWeight="800" fill={isAsteroid.color} textAnchor="middle">R</text>
+                <text x={G.x + 20} y={G.y - 10} fontSize={11} fontWeight="800" fill={body.color} textAnchor="middle">R</text>
               )}
             </g>
           );
