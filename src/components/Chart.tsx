@@ -114,19 +114,115 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     () => new Set(savedChart()?.retrogrades ?? [])
   );
   const [highlightBody, setHighlightBody] = useState<string | null>(null);
-  const historyRef = useRef<{ angles: number[]; ringRotation: number; planetAngles: (number | null)[]; asteroidAngles: (number | null)[]; retrogrades: string[] }[]>([]);
-  const redoRef = useRef<{ angles: number[]; ringRotation: number; planetAngles: (number | null)[]; asteroidAngles: (number | null)[]; retrogrades: string[] }[]>([]);
+
+  type HistoryEntry = {
+    angles: number[];
+    ringRotation: number;
+    planetAngles: (number | null)[];
+    asteroidAngles: (number | null)[];
+    retrogrades: string[];
+    showMinorAspects: boolean;
+    showMajorAspects: boolean;
+    showAsteroidAspects: boolean;
+    showNodeAspects: boolean;
+  };
+
+  const historyRef = useRef<HistoryEntry[]>([]);
+  const redoRef = useRef<HistoryEntry[]>([]);
+
+  const anglesRef = useRef<number[]>(angles);
+  const ringRotationRef = useRef<number>(ringRotation);
+  const planetAnglesRef = useRef<(number | null)[]>(planetAngles);
+  const asteroidAnglesRef = useRef<(number | null)[]>(asteroidAngles);
+  const retrogradesRef = useRef<Set<string>>(retrogrades);
+  const filtersRef = useRef({
+    showMinorAspects: savedChart()?.showMinorAspects ?? showMinorAspects,
+    showMajorAspects: savedChart()?.showMajorAspects ?? showMajorAspects,
+    showAsteroidAspects: savedChart()?.showAsteroidAspects ?? showAsteroidAspects,
+    showNodeAspects: savedChart()?.showNodeAspects ?? showNodeAspects,
+  });
+  const onOptionsChangeRef = useRef(onOptionsChange);
+  useEffect(() => {
+    onOptionsChangeRef.current = onOptionsChange;
+  }, [onOptionsChange]);
+
+  const snapshotCurrent = useCallback((): HistoryEntry => ({
+    angles: [...anglesRef.current],
+    ringRotation: ringRotationRef.current,
+    planetAngles: [...planetAnglesRef.current],
+    asteroidAngles: [...asteroidAnglesRef.current],
+    retrogrades: [...retrogradesRef.current],
+    ...filtersRef.current,
+  }), []);
+
+  const applySnapshot = useCallback((snap: HistoryEntry) => {
+    anglesRef.current = [...snap.angles];
+    ringRotationRef.current = snap.ringRotation;
+    planetAnglesRef.current = [...snap.planetAngles];
+    asteroidAnglesRef.current = [...snap.asteroidAngles];
+    retrogradesRef.current = new Set(snap.retrogrades);
+    filtersRef.current = {
+      showMinorAspects: snap.showMinorAspects,
+      showMajorAspects: snap.showMajorAspects,
+      showAsteroidAspects: snap.showAsteroidAspects,
+      showNodeAspects: snap.showNodeAspects,
+    };
+    setAngles([...snap.angles]);
+    setRingRotation(snap.ringRotation);
+    setPlanetAngles([...snap.planetAngles]);
+    setAsteroidAngles([...snap.asteroidAngles]);
+    setRetrogrades(new Set(snap.retrogrades));
+    onOptionsChangeRef.current?.({ ...filtersRef.current });
+  }, []);
+
   const pushHistory = useCallback(() => {
+    historyRef.current.push(snapshotCurrent());
+    if (historyRef.current.length > 50) historyRef.current.shift();
+    redoRef.current = [];
+  }, [snapshotCurrent]);
+
+  useEffect(() => { anglesRef.current = angles; }, [angles]);
+  useEffect(() => { ringRotationRef.current = ringRotation; }, [ringRotation]);
+  useEffect(() => { planetAnglesRef.current = planetAngles; }, [planetAngles]);
+  useEffect(() => { asteroidAnglesRef.current = asteroidAngles; }, [asteroidAngles]);
+  useEffect(() => { retrogradesRef.current = retrogrades; }, [retrogrades]);
+
+  // Los filtros viven en App: cuando cambian desde los botones, se registra el
+  // estado previo para que deshacer/rehacer los considere. Los cambios
+  // originados por undo/redo/load ya sincronizaron filtersRef, así que no
+  // generan una entrada duplicada.
+  const filterFirstRun = useRef(true);
+  useEffect(() => {
+    if (filterFirstRun.current) {
+      filterFirstRun.current = false;
+      return;
+    }
+    const prev = filtersRef.current;
+    if (
+      prev.showMinorAspects === showMinorAspects &&
+      prev.showMajorAspects === showMajorAspects &&
+      prev.showAsteroidAspects === showAsteroidAspects &&
+      prev.showNodeAspects === showNodeAspects
+    ) {
+      return;
+    }
     historyRef.current.push({
       angles: [...angles],
       ringRotation,
       planetAngles: [...planetAngles],
       asteroidAngles: [...asteroidAngles],
       retrogrades: [...retrogrades],
+      ...prev,
     });
     if (historyRef.current.length > 50) historyRef.current.shift();
     redoRef.current = [];
-  }, [angles, ringRotation, planetAngles, asteroidAngles, retrogrades]);
+    filtersRef.current = {
+      showMinorAspects,
+      showMajorAspects,
+      showAsteroidAspects,
+      showNodeAspects,
+    };
+  }, [showMinorAspects, showMajorAspects, showAsteroidAspects, showNodeAspects, angles, ringRotation, planetAngles, asteroidAngles, retrogrades]);
 
   useEffect(() => {
     onRetrogradesChange?.(retrogrades);
@@ -305,7 +401,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
   const startPlanetDrag = (idx: number) => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const base = planetAngles[idx];
+    const base = planetAnglesRef.current[idx];
     if (base === null) return;
     pushHistory();
     setHighlightBody(PLANET_ORDER[idx]);
@@ -318,7 +414,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     e.stopPropagation();
     const esNorth = ASTEROID_ORDER[idx] === 'northNode';
     const idxPar = esNorth ? 0 : idx;
-    const base = esNorth ? asteroidAngles[0] : asteroidAngles[idx];
+    const base = esNorth ? asteroidAnglesRef.current[0] : asteroidAnglesRef.current[idx];
     if (base === null) return;
     pushHistory();
     setHighlightBody(ASTEROID_ORDER[idx]);
@@ -331,9 +427,9 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     e.stopPropagation();
     pushHistory();
     (e.target as Element).setPointerCapture(e.pointerId);
-    ringDrag.current = { inicio: angleFromPointer(e), base: ringRotation };
+    ringDrag.current = { inicio: angleFromPointer(e), base: ringRotationRef.current };
     if (syncRotation) {
-      ringSyncBodies.current = { planets: [...planetAngles], asteroids: [...asteroidAngles] };
+      ringSyncBodies.current = { planets: [...planetAnglesRef.current], asteroids: [...asteroidAnglesRef.current] };
     } else {
       ringSyncBodies.current = null;
     }
@@ -341,101 +437,117 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
 
 const reset = () => {
     pushHistory();
-    setAngles(Array.from({ length: DIAMETER_COUNT }, (_, i) => i * (360 / (DIAMETER_COUNT * 2))));
+    const nextAngles = Array.from({ length: DIAMETER_COUNT }, (_, i) => i * (360 / (DIAMETER_COUNT * 2)));
+    const nextPlanets: (number | null)[] = Array(PLANET_ORDER.length).fill(null);
+    const nextAsteroids: (number | null)[] = Array(ASTEROID_ORDER.length).fill(null);
+    const nextRetro = new Set<string>();
+    anglesRef.current = [...nextAngles];
+    ringRotationRef.current = 0;
+    planetAnglesRef.current = [...nextPlanets];
+    asteroidAnglesRef.current = [...nextAsteroids];
+    retrogradesRef.current = new Set(nextRetro);
+    setAngles(nextAngles);
     setRingRotation(0);
-    setPlanetAngles(Array(PLANET_ORDER.length).fill(null));
-    setAsteroidAngles(Array(ASTEROID_ORDER.length).fill(null));
-    setRetrogrades(new Set());
+    setPlanetAngles(nextPlanets);
+    setAsteroidAngles(nextAsteroids);
+    setRetrogrades(nextRetro);
   };
 
   const addBody = (name: string) => {
-    pushHistory();
     const pi = PLANET_ORDER.indexOf(name as (typeof PLANET_ORDER)[number]);
     if (pi >= 0) {
-      setPlanetAngles((prev) => {
-        if (prev[pi] !== null) return prev;
-        const next = [...prev];
-        const count = next.filter((v) => v !== null).length;
-        const base = norm360(count * 30);
-        const sunIndex = PLANET_ORDER.indexOf('sun');
+      if (planetAnglesRef.current[pi] !== null) return;
+      pushHistory();
+      const next = [...planetAnglesRef.current];
+      const count = next.filter((v) => v !== null).length;
+      const base = norm360(count * 30);
+      const sunIndex = PLANET_ORDER.indexOf('sun');
 
-        if (name === 'sun') {
-          next[pi] = base;
-          for (const k of Object.keys(MAX_ELONGATION) as (keyof typeof MAX_ELONGATION)[]) {
-            const pi2 = PLANET_ORDER.indexOf(k);
-            const a = next[pi2];
-            if (a === null) continue;
-            const limit = MAX_ELONGATION[k];
-            let delta = norm360(a - base);
-            if (delta > 180) delta -= 360;
-            if (Math.abs(delta) > limit) {
-              next[pi2] = norm360(base + Math.sign(delta) * limit);
-            }
-          }
-        } else {
-          const limit = MAX_ELONGATION[name as keyof typeof MAX_ELONGATION];
-          const sol = next[sunIndex];
-          if (limit !== undefined && sol !== null) {
-            next[pi] = norm360(sol + limit / 2);
-          } else {
-            next[pi] = base;
+      if (name === 'sun') {
+        next[pi] = base;
+        for (const k of Object.keys(MAX_ELONGATION) as (keyof typeof MAX_ELONGATION)[]) {
+          const pi2 = PLANET_ORDER.indexOf(k);
+          const a = next[pi2];
+          if (a === null) continue;
+          const limit = MAX_ELONGATION[k];
+          let delta = norm360(a - base);
+          if (delta > 180) delta -= 360;
+          if (Math.abs(delta) > limit) {
+            next[pi2] = norm360(base + Math.sign(delta) * limit);
           }
         }
-        return next;
-      });
+      } else {
+        const limit = MAX_ELONGATION[name as keyof typeof MAX_ELONGATION];
+        const sol = next[sunIndex];
+        if (limit !== undefined && sol !== null) {
+          next[pi] = norm360(sol + limit / 2);
+        } else {
+          next[pi] = base;
+        }
+      }
+      planetAnglesRef.current = next;
+      setPlanetAngles(next);
       return;
     }
     const ai = ASTEROID_ORDER.indexOf(name as (typeof ASTEROID_ORDER)[number]);
     if (ai < 0) return;
-    setAsteroidAngles((prev) => {
-      if (prev[ai] !== null) return prev;
-      const next = [...prev];
-      const count = next.filter((v) => v !== null).length;
-      const angle = norm360(count * 30 + 15);
-      if (name === 'southNode' || name === 'northNode') {
-        next[0] = angle;
-        next[1] = norm360(angle + 180);
-      } else {
-        next[ai] = angle;
-      }
-      return next;
-    });
+    if (name === 'southNode' || name === 'northNode') {
+      if (asteroidAnglesRef.current[0] !== null) return;
+    } else if (asteroidAnglesRef.current[ai] !== null) {
+      return;
+    }
+    pushHistory();
+    const next = [...asteroidAnglesRef.current];
+    const count = next.filter((v) => v !== null).length;
+    const angle = norm360(count * 30 + 15);
+    if (name === 'southNode' || name === 'northNode') {
+      next[0] = angle;
+      next[1] = norm360(angle + 180);
+    } else {
+      next[ai] = angle;
+    }
+    asteroidAnglesRef.current = next;
+    setAsteroidAngles(next);
   };
 
   const toggleRetrograde = (name: string) => {
     if (['sun', 'moon', 'southNode', 'northNode'].includes(name)) return;
     pushHistory();
-    setRetrogrades((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
+    const next = new Set(retrogradesRef.current);
+    if (next.has(name)) next.delete(name);
+    else next.add(name);
+    retrogradesRef.current = next;
+    setRetrogrades(next);
   };
 
   const removeBody = (name: string) => {
-    pushHistory();
     const pi = PLANET_ORDER.indexOf(name as (typeof PLANET_ORDER)[number]);
     if (pi >= 0) {
-      setPlanetAngles((prev) => {
-        const next = [...prev];
-        next[pi] = null;
-        return next;
-      });
+      if (planetAnglesRef.current[pi] === null) return;
+      pushHistory();
+      const next = [...planetAnglesRef.current];
+      next[pi] = null;
+      planetAnglesRef.current = next;
+      setPlanetAngles(next);
       return;
     }
     const ai = ASTEROID_ORDER.indexOf(name as (typeof ASTEROID_ORDER)[number]);
     if (ai < 0) return;
-    setAsteroidAngles((prev) => {
-      const next = [...prev];
-      if (name === 'southNode' || name === 'northNode') {
-        next[0] = null;
-        next[1] = null;
-      } else {
-        next[ai] = null;
-      }
-      return next;
-    });
+    if (name === 'southNode' || name === 'northNode') {
+      if (asteroidAnglesRef.current[0] === null && asteroidAnglesRef.current[1] === null) return;
+    } else if (asteroidAnglesRef.current[ai] === null) {
+      return;
+    }
+    pushHistory();
+    const next = [...asteroidAnglesRef.current];
+    if (name === 'southNode' || name === 'northNode') {
+      next[0] = null;
+      next[1] = null;
+    } else {
+      next[ai] = null;
+    }
+    asteroidAnglesRef.current = next;
+    setAsteroidAngles(next);
   };
 
   const downloadChart = () => {
@@ -472,56 +584,44 @@ const reset = () => {
           throw new Error('estructura inválida');
         }
         pushHistory();
+        const nextFilters = {
+          showMinorAspects: data.showMinorAspects ?? true,
+          showMajorAspects: data.showMajorAspects ?? true,
+          showAsteroidAspects: data.showAsteroidAspects ?? true,
+          showNodeAspects: data.showNodeAspects ?? true,
+        };
+        // Sincronizar refs antes de que lleguen las props para no duplicar la entrada.
+        anglesRef.current = [...data.angles];
+        ringRotationRef.current = data.ringRotation ?? 0;
+        planetAnglesRef.current = [...data.planetAngles];
+        asteroidAnglesRef.current = [...data.asteroidAngles];
+        retrogradesRef.current = new Set(data.retrogrades ?? []);
+        filtersRef.current = { ...nextFilters };
         setAngles(data.angles);
         setRingRotation(data.ringRotation ?? 0);
         setPlanetAngles(data.planetAngles);
         setAsteroidAngles(data.asteroidAngles);
         setRetrogrades(new Set(data.retrogrades ?? []));
-        onOptionsChange?.({
-          showMinorAspects: data.showMinorAspects ?? true,
-          showMajorAspects: data.showMajorAspects ?? true,
-          showAsteroidAspects: data.showAsteroidAspects ?? true,
-          showNodeAspects: data.showNodeAspects ?? true,
-        });
+        onOptionsChangeRef.current?.(nextFilters);
       })
       .catch(() => alert('El archivo no es una carta válida'));
   };
 
-  const undo = () => {
+  const undo = useCallback(() => {
     const prev = historyRef.current.pop();
     if (!prev) return;
-    redoRef.current.push({
-      angles: [...angles],
-      ringRotation,
-      planetAngles: [...planetAngles],
-      asteroidAngles: [...asteroidAngles],
-      retrogrades: [...retrogrades],
-    });
+    redoRef.current.push(snapshotCurrent());
     if (redoRef.current.length > 50) redoRef.current.shift();
-    setAngles(prev.angles);
-    setRingRotation(prev.ringRotation);
-    setPlanetAngles(prev.planetAngles);
-    setAsteroidAngles(prev.asteroidAngles);
-    setRetrogrades(new Set(prev.retrogrades));
-  };
+    applySnapshot(prev);
+  }, [snapshotCurrent, applySnapshot]);
 
-  const redo = () => {
+  const redo = useCallback(() => {
     const next = redoRef.current.pop();
     if (!next) return;
-    historyRef.current.push({
-      angles: [...angles],
-      ringRotation,
-      planetAngles: [...planetAngles],
-      asteroidAngles: [...asteroidAngles],
-      retrogrades: [...retrogrades],
-    });
+    historyRef.current.push(snapshotCurrent());
     if (historyRef.current.length > 50) historyRef.current.shift();
-    setAngles(next.angles);
-    setRingRotation(next.ringRotation);
-    setPlanetAngles(next.planetAngles);
-    setAsteroidAngles(next.asteroidAngles);
-    setRetrogrades(new Set(next.retrogrades));
-  };
+    applySnapshot(next);
+  }, [snapshotCurrent, applySnapshot]);
 
   useImperativeHandle(ref, () => ({
     reset,
@@ -700,14 +800,15 @@ const reset = () => {
     syncedOptions.current = true;
     const saved = savedChart();
     if (saved) {
-      onOptionsChange?.({
+      filtersRef.current = {
         showMinorAspects: saved.showMinorAspects ?? true,
         showMajorAspects: saved.showMajorAspects ?? true,
         showAsteroidAspects: saved.showAsteroidAspects ?? true,
         showNodeAspects: saved.showNodeAspects ?? true,
-      });
+      };
+      onOptionsChangeRef.current?.({ ...filtersRef.current });
     }
-  }, [onOptionsChange]);
+  }, []);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -715,43 +816,18 @@ const reset = () => {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
         e.preventDefault();
-        const prev = historyRef.current.pop();
-        if (!prev) return;
-        redoRef.current.push({
-          angles: [...angles],
-          ringRotation,
-          planetAngles: [...planetAngles],
-          asteroidAngles: [...asteroidAngles],
-          retrogrades: [...retrogrades],
-        });
-        if (redoRef.current.length > 50) redoRef.current.shift();
-        setAngles(prev.angles);
-        setRingRotation(prev.ringRotation);
-        setPlanetAngles(prev.planetAngles);
-        setAsteroidAngles(prev.asteroidAngles);
-        setRetrogrades(new Set(prev.retrogrades));
-      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+        undo();
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') ||
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && e.shiftKey)
+      ) {
         e.preventDefault();
-        const next = redoRef.current.pop();
-        if (!next) return;
-        historyRef.current.push({
-          angles: [...angles],
-          ringRotation,
-          planetAngles: [...planetAngles],
-          asteroidAngles: [...asteroidAngles],
-          retrogrades: [...retrogrades],
-        });
-        if (historyRef.current.length > 50) historyRef.current.shift();
-        setAngles(next.angles);
-        setRingRotation(next.ringRotation);
-        setPlanetAngles(next.planetAngles);
-        setAsteroidAngles(next.asteroidAngles);
-        setRetrogrades(new Set(next.retrogrades));
+        redo();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [angles, ringRotation, planetAngles, asteroidAngles, retrogrades]);
+  }, [undo, redo]);
 
   const bodyRender: Array<
     (typeof PLANET_ORDER)[number] | (typeof ASTEROID_ORDER)[number]
