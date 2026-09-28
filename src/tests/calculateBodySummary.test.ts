@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { calculateBodySummaries } from '../utils/summary.ts';
+
+// Carta de prueba 1: C1
 import C1 from './data/testChart1.json';
+// Carta de prueba 2: C2
 import C2 from './data/testChart2.json';
 
 describe('calculateBodySummaries', () => {
