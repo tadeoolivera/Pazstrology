@@ -601,6 +601,13 @@ const reset = () => {
     })
   ];
   const aspectLines = [];
+  const conjunctionEndpoints: Array<{
+    x: number;
+    y: number;
+    color: string;
+    n1: typeof bodies[number]['name'];
+    n2: typeof bodies[number]['name'];
+  }> = [];
   for (let i = 0; i < bodies.length; i++) {
     for (let j = i + 1; j < bodies.length; j++) {
       const d = circularDistance(bodies[i].angle, bodies[j].angle);
@@ -625,17 +632,24 @@ const reset = () => {
           if (asp.name === 'conjunción') {
             const arcRadius = ASPECTS_RADIUS;
             const a1 = norm360(bodies[i].angle);
-            let a2 = norm360(bodies[j].angle);
-            if (Math.abs(a2 - a1) > 180) a2 += 360;
-            const mid = (a1 + a2) / 2;
-            let span = Math.abs(a2 - a1);
-            if (span < 12) span = 12;
-            const P1 = toXY(mid - span / 2, arcRadius);
-            const P2 = toXY(mid + span / 2, arcRadius);
+            const a2 = norm360(bodies[j].angle);
+
+            const P1 = toXY(a1, arcRadius);
+            const P2 = toXY(a2, arcRadius);
+
+            const span = ((a2 - a1 + 540) % 360) - 180;
+
+            const sweepFlag = span >= 0 ? 0 : 1;
+
+            conjunctionEndpoints.push(
+              { x: P1.x, y: P1.y, color: asp.color, n1: bodies[i].name, n2: bodies[j].name },
+              { x: P2.x, y: P2.y, color: asp.color, n1: bodies[i].name, n2: bodies[j].name }
+            );
+
             aspectLines.push({
               n1: bodies[i].name,
               n2: bodies[j].name,
-              d: `M ${P1.x} ${P1.y} A ${arcRadius} ${arcRadius} 0 0 ${span > 0 ? 1 : 0} ${P2.x} ${P2.y}`,
+              d: `M ${P1.x} ${P1.y} A ${arcRadius} ${arcRadius} 0 0 ${sweepFlag} ${P2.x} ${P2.y}`,
               color: asp.color,
               aspecto: asp.name
             });
@@ -852,9 +866,25 @@ const reset = () => {
               stroke={l.color}
               strokeWidth={focused ? 2 : 1.2}
               strokeOpacity={focused ? 1 : 0.7}
+              strokeLinecap="round"
             />
           );
         })}
+
+        {conjunctionEndpoints.map((point, i) => (
+          highlightBody !== null && point.n1 !== highlightBody && point.n2 !== highlightBody
+            ? null
+            : (
+              <circle
+                key={`conjunction-endpoint-${i}`}
+                cx={point.x}
+                cy={point.y}
+                r={2.8}
+                fill={point.color}
+                opacity={highlightBody !== null ? 1 : 0.85}
+              />
+            )
+        ))}
 
         {/* Marcas de planetas */}
         {planetAngles.map((a, idx) => {
