@@ -186,11 +186,7 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
   useEffect(() => { planetAnglesRef.current = planetAngles; }, [planetAngles]);
   useEffect(() => { asteroidAnglesRef.current = asteroidAngles; }, [asteroidAngles]);
   useEffect(() => { retrogradesRef.current = retrogrades; }, [retrogrades]);
-
-  // Los filtros viven en App: cuando cambian desde los botones, se registra el
-  // estado previo para que deshacer/rehacer los considere. Los cambios
-  // originados por undo/redo/load ya sincronizaron filtersRef, así que no
-  // generan una entrada duplicada.
+  
   const filterFirstRun = useRef(true);
   useEffect(() => {
     if (filterFirstRun.current) {
@@ -227,6 +223,12 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
   useEffect(() => {
     onRetrogradesChange?.(retrogrades);
   }, [retrogrades, onRetrogradesChange]);
+
+  const snapToGrid = (a: number) => norm360(Math.round(a));
+  const normDelta = (d: number) => {
+    const n = norm360(d);
+    return n > 180 ? n - 360 : n;
+  };
 
   const visibleAsteroidAngles = asteroidAngles.map((a, i) => {
     if (a === null) return null as number | null;
@@ -326,8 +328,8 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
       const sunIndex = PLANET_ORDER.indexOf('sun');
       setPlanetAngles((prev) => {
         const next = [...prev];
-        const raw = norm360(base + (theta - inicio));
-        const angle = snap ? norm360(Math.round(raw)) : raw;
+        const raw = base + normDelta(theta - inicio);
+        const angle = snap ? snapToGrid(raw) : norm360(raw);
         if (idx === sunIndex) {
           next[idx] = angle;
           for (const name of Object.keys(MAX_ELONGATION) as (keyof typeof MAX_ELONGATION)[]) {
@@ -335,21 +337,21 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
             const prevPi = prev[pi];
             if (prevPi === null) continue;
             const limit = MAX_ELONGATION[name];
-            let delta = norm360(prevPi - angle);
-            if (delta > 180) delta -= 360;
+            const delta = normDelta(prevPi - angle);
             if (Math.abs(delta) > limit + 0.5) {
-              const pushed = norm360(angle + Math.sign(delta) * limit);
-              next[pi] = snap ? norm360(Math.round(pushed)) : pushed;
+              const pushed = angle + Math.sign(delta) * limit;
+              next[pi] = snap ? snapToGrid(pushed) : norm360(pushed);
+            } else if (snap) {
+              next[pi] = snapToGrid(prevPi);
             }
           }
         } else {
           const limit = MAX_ELONGATION[PLANET_ORDER[idx] as keyof typeof MAX_ELONGATION];
           const sol = prev[sunIndex];
           if (limit !== undefined && sol !== null) {
-            let delta = norm360(angle - sol);
-            if (delta > 180) delta -= 360;
-            const clamped = norm360(sol + Math.max(-limit, Math.min(limit, delta)));
-            next[idx] = snap ? norm360(Math.round(clamped)) : clamped;
+            const delta = normDelta(angle - sol);
+            const clamped = sol + Math.max(-limit, Math.min(limit, delta));
+            next[idx] = snap ? snapToGrid(clamped) : norm360(clamped);
           } else {
             next[idx] = angle;
           }
@@ -364,8 +366,8 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
       const snap = e.shiftKey;
       setAsteroidAngles((prev) => {
         const next = [...prev];
-        const raw = norm360(base + (theta - inicio));
-        next[idx] = snap ? norm360(Math.round(raw)) : raw;
+        const raw = base + normDelta(theta - inicio);
+        next[idx] = snap ? snapToGrid(raw) : norm360(raw);
         return next;
       });
       return;
@@ -401,9 +403,16 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
   const startPlanetDrag = (idx: number) => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const base = planetAnglesRef.current[idx];
-    if (base === null) return;
+    const rawBase = planetAnglesRef.current[idx];
+    if (rawBase === null) return;
     pushHistory();
+    const base = e.shiftKey ? snapToGrid(rawBase) : rawBase;
+    if (base !== rawBase) {
+      const next = [...planetAnglesRef.current];
+      next[idx] = base;
+      planetAnglesRef.current = next;
+      setPlanetAngles(next);
+    }
     setHighlightBody(PLANET_ORDER[idx]);
     (e.target as Element).setPointerCapture(e.pointerId);
     planetDrag.current = { idx, inicio: angleFromPointer(e), base };
@@ -414,9 +423,16 @@ const Chart = ({ ref, onSummary, onOptionsChange, onRetrogradesChange, showMinor
     e.stopPropagation();
     const esNorth = ASTEROID_ORDER[idx] === 'northNode';
     const idxPar = esNorth ? 0 : idx;
-    const base = esNorth ? asteroidAnglesRef.current[0] : asteroidAnglesRef.current[idx];
-    if (base === null) return;
+    const rawBase = esNorth ? asteroidAnglesRef.current[0] : asteroidAnglesRef.current[idx];
+    if (rawBase === null) return;
     pushHistory();
+    const base = e.shiftKey ? snapToGrid(rawBase) : rawBase;
+    if (base !== rawBase) {
+      const next = [...asteroidAnglesRef.current];
+      next[idxPar] = base;
+      asteroidAnglesRef.current = next;
+      setAsteroidAngles(next);
+    }
     setHighlightBody(ASTEROID_ORDER[idx]);
     (e.target as Element).setPointerCapture(e.pointerId);
     asteroidDrag.current = { idx: idxPar, inicio: angleFromPointer(e), base };
