@@ -1,12 +1,12 @@
 import { useState, useRef } from 'react';
 import type { CSSProperties } from 'react';
-import Chart, { type ChartActions } from './components/Chart.tsx';
-import Summary from './components/SummaryBodies.tsx';
-import SummaryHouses from './components/SummaryHouses.tsx';
-import SummaryAspects from './components/SummaryAspects.tsx';
-import Modal from './components/Modal.tsx';
-import BodyPanel from './components/BodyPanel.tsx';
-import type { ChartData } from './utils/summary.ts';
+import Chart, { type ChartActions } from '../components/Chart.tsx';
+import Summary from '../components/SummaryBodies.tsx';
+import SummaryHouses from '../components/SummaryHouses.tsx';
+import SummaryAspects from '../components/SummaryAspects.tsx';
+import Modal from '../components/Modal.tsx';
+import BodyPanel from '../components/BodyPanel.tsx';
+import type { ChartData } from '../utils/summary.ts';
 
 type ModalView = 'planets' | 'houses' | 'aspects' | null;
 
@@ -20,7 +20,7 @@ const buttonStyle: CSSProperties = {
   cursor: 'pointer',
 };
 
-export default function App() {
+export default function Home() {
   const [data, setData] = useState<ChartData | null>(null);
   const [modal, setModal] = useState<ModalView>(null);
   const [showMinorAspects, setShowMinorAspects] = useState(true);
